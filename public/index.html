@@ -1318,7 +1318,9 @@
   <!-- 4. CORE JAVASCRIPT LOGIC (Theme, I18n, Charts, API & RBAC)                 -->
   <!-- ========================================================================= -->
   <script>
-    const API = 'http://localhost:5000/api/v1';
+    const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ? 'http://localhost:5000/api/v1'
+      : (window.location.port === '5000' ? `${window.location.origin}/api/v1` : '');
 
     // ─── TRANSLATION DICTIONARY (Arabic / English) ───────────────────────────
     const I18N = {
@@ -1737,7 +1739,30 @@
         mountApplication();
         showToast(currentLang === 'ar' ? `مرحباً بك، ${data.user.name}` : `Welcome back, ${data.user.name}`, 'success');
       } catch (err) {
-        errMsg.textContent = 'Server connection failed';
+        // Fallback demo mode for GitHub Pages or offline access
+        const identifierVal = document.getElementById('inputUsername').value.trim().toLowerCase();
+        const pwd = document.getElementById('inputPassword').value;
+        if ((identifierVal === 'admin' || identifierVal === 'admin@apparel.com') && pwd === 'admin123') {
+          session = {
+            token: 'demo_token_admin',
+            user: { id: 'u1', name: 'أحمد المدير', username: 'admin', email: 'admin@apparel.com', role: 'admin', phone: '+20 100 123 4567', branch: 'المقر الرئيسي - القاهرة', address: 'مدينة نصر، القاهرة' }
+          };
+          localStorage.setItem('apparel_auth_session', JSON.stringify(session));
+          mountApplication();
+          showToast(currentLang === 'ar' ? 'تم تسجيل الدخول في الوضع التجريبي المباشر بنجاح!' : 'Logged into live demo mode successfully!', 'success');
+          return;
+        } else if ((identifierVal === 'employee' || identifierVal === 'employee@apparel.com') && pwd === 'emp123') {
+          session = {
+            token: 'demo_token_emp',
+            user: { id: 'u2', name: 'محمد الموظف', username: 'employee', email: 'employee@apparel.com', role: 'employee', phone: '+20 111 987 6543', branch: 'فرع الجيزة', address: 'شارع الهرم، الجيزة' }
+          };
+          localStorage.setItem('apparel_auth_session', JSON.stringify(session));
+          mountApplication();
+          showToast(currentLang === 'ar' ? 'تم تسجيل الدخول في الوضع التجريبي المباشر بنجاح!' : 'Logged into live demo mode successfully!', 'success');
+          return;
+        }
+
+        errMsg.textContent = currentLang === 'ar' ? 'فشل الاتصال بالخادم. يرجى التأكد من بيانات الدخول' : 'Server connection failed. Please check credentials';
         errBox.classList.remove('hidden');
       } finally {
         btn.disabled = false;
@@ -2322,17 +2347,30 @@
     // ─── 6. PRODUCTS INVENTORY LOGIC ─────────────────────────────────────────
     async function loadProducts() {
       try {
-        const res = await fetch(`${API}/products`, { headers: authHeaders() });
-        const data = await res.json();
-        if (!res.ok) return;
-
-        products = data.data;
-        renderTable();
-        populateDropdowns();
-        renderLowStockAlerts();
+        if (API) {
+          const res = await fetch(`${API}/products`, { headers: authHeaders() });
+          const data = await res.json();
+          if (res.ok && Array.isArray(data.data) && data.data.length) {
+            products = data.data;
+          }
+        }
       } catch (err) {
-        console.error('Failed to load products', err);
+        console.warn('Backend API unreachable, using default inventory data', err);
       }
+
+      if (!products || !products.length) {
+        products = [
+          { id: '1', name: 'Classic Crew Neck T-Shirt', category: 'shirts', sku: 'SHR-CN-001', sizes: ['S','M','L','XL'], colors: ['White','Black'], costPrice: 8.50, retailPrice: 24.99, quantity: 150, unitProfit: 16.49, profitMargin: 66.0 },
+          { id: '2', name: 'Slim Fit Chinos', category: 'pants', sku: 'PNT-SF-002', sizes: ['S','M','L','XL'], colors: ['Khaki','Navy'], costPrice: 18.00, retailPrice: 49.99, quantity: 80, unitProfit: 31.99, profitMargin: 64.0 },
+          { id: '3', name: 'Floral Summer Dress', category: 'dresses', sku: 'DRS-FL-003', sizes: ['XS','S','M','L'], colors: ['Blue Floral'], costPrice: 22.00, retailPrice: 64.99, quantity: 45, unitProfit: 42.99, profitMargin: 66.1 },
+          { id: '4', name: 'Leather Bomber Jacket', category: 'jackets', sku: 'JKT-LB-004', sizes: ['M','L','XL'], colors: ['Black','Brown'], costPrice: 65.00, retailPrice: 189.99, quantity: 25, unitProfit: 124.99, profitMargin: 65.8 },
+          { id: '5', name: 'Running Shorts', category: 'activewear', sku: 'ACT-RS-005', sizes: ['S','M','L'], colors: ['Black','Grey'], costPrice: 7.00, retailPrice: 29.99, quantity: 200, unitProfit: 22.99, profitMargin: 76.7 }
+        ];
+      }
+
+      renderTable();
+      populateDropdowns();
+      renderLowStockAlerts();
     }
 
     function renderTable() {
@@ -2979,13 +3017,22 @@
       if (savedSession) {
         try {
           session = JSON.parse(savedSession);
-          fetch(`${API}/auth/me`, { headers: authHeaders() })
-            .then(res => res.json())
-            .then(data => {
-              if (data.success) mountApplication();
-              else handleLogout();
-            })
-            .catch(() => handleLogout());
+          if (session?.token && session.token.startsWith('demo_token')) {
+            mountApplication();
+          } else if (API) {
+            fetch(`${API}/auth/me`, { headers: authHeaders() })
+              .then(res => res.json())
+              .then(data => {
+                if (data.success) mountApplication();
+                else handleLogout();
+              })
+              .catch(() => {
+                if (session?.user) mountApplication();
+                else handleLogout();
+              });
+          } else {
+            mountApplication();
+          }
         } catch {
           handleLogout();
         }
