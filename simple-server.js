@@ -64,15 +64,16 @@ const adminOnly = verifyAdmin;
 const USERS = [
   {
     id: 'admin_1',
-    name: 'System Administrator',
+    name: 'المدير العام (Admin)',
     email: 'admin@apparel.com',
     username: 'admin',
     password: 'Admin@Apparel2026!',
     role: 'admin',
-    avatar: 'SA',
-    phone: '',
-    address: '',
-    branch: 'Headquarters',
+    jobTitle: 'المدير العام',
+    avatar: 'AD',
+    phone: '+20 100 000 0000',
+    address: 'الإدارة المركزية',
+    branch: 'المقر الرئيسي',
     createdAt: new Date().toISOString()
   }
 ];
@@ -122,6 +123,7 @@ app.post('/api/v1/auth/login', (req, res) => {
     email: user.email, 
     name: user.name, 
     role: user.role, 
+    jobTitle: user.jobTitle || 'المدير العام',
     avatar: user.avatar 
   });
 
@@ -134,6 +136,7 @@ app.post('/api/v1/auth/login', (req, res) => {
       username: user.username, 
       email: user.email, 
       name: user.name, 
+      jobTitle: user.jobTitle || (user.role === 'admin' ? 'المدير العام' : 'موظف مبيعات'),
       phone: user.phone,
       address: user.address,
       branch: user.branch,
@@ -154,6 +157,7 @@ function getEmployeesHandler(_req, res) {
   const list = USERS.map(u => ({
     id: u.id,
     name: u.name,
+    jobTitle: u.jobTitle || (u.role === 'admin' ? 'المدير العام' : 'موظف مبيعات'),
     email: u.email || '—',
     phone: u.phone || '—',
     address: u.address || '—',
@@ -167,7 +171,7 @@ function getEmployeesHandler(_req, res) {
 }
 
 function createEmployeeHandler(req, res) {
-  const { name, email, phone, address, branch, username, password, role } = req.body;
+  const { name, jobTitle, email, phone, address, branch, username, password, role } = req.body;
 
   if (!name || !username || !password) {
     return res.status(400).json({ success: false, message: 'Name, username, and password are required.' });
@@ -188,6 +192,7 @@ function createEmployeeHandler(req, res) {
   const newEmp = {
     id: 'u' + Date.now(),
     name: name.trim(),
+    jobTitle: (jobTitle || (role === 'admin' ? 'مدير نظام' : 'موظف مبيعات')).trim(),
     email: (email || '').trim().toLowerCase(),
     phone: (phone || '').trim(),
     address: (address || '').trim(),
@@ -230,11 +235,19 @@ function deleteEmployeeHandler(req, res) {
 
 function updateEmployeeHandler(req, res) {
   const { id } = req.params;
-  const { name, email, phone, address, branch, role } = req.body;
+  const { name, jobTitle, email, phone, address, branch, username, password, role } = req.body;
 
   const emp = USERS.find(u => u.id === id);
   if (!emp) {
     return res.status(404).json({ success: false, message: 'Employee not found.' });
+  }
+
+  // Check unique username if modified
+  if (username && username.trim().toLowerCase() !== emp.username.toLowerCase()) {
+    if (USERS.some(u => u.id !== id && u.username.toLowerCase() === username.trim().toLowerCase())) {
+      return res.status(400).json({ success: false, message: 'Username is already in use by another user.' });
+    }
+    emp.username = username.trim();
   }
 
   // Check unique email if modified
@@ -245,10 +258,12 @@ function updateEmployeeHandler(req, res) {
   }
 
   if (name) emp.name = name.trim();
+  if (jobTitle !== undefined) emp.jobTitle = jobTitle.trim();
   if (email !== undefined) emp.email = (email || '').trim().toLowerCase();
   if (phone !== undefined) emp.phone = (phone || '').trim();
   if (address !== undefined) emp.address = (address || '').trim();
   if (branch !== undefined) emp.branch = (branch || '').trim();
+  if (password && password.trim()) emp.password = password;
   if (role && (role === 'admin' || role === 'employee')) emp.role = role;
 
   if (name) {
@@ -268,6 +283,35 @@ app.post(['/api/v1/employees', '/api/employees', '/api/admin/employees', '/api/v
 app.put(['/api/v1/employees/:id', '/api/employees/:id', '/api/admin/employees/:id', '/api/v1/admin/employees/:id'], authMiddleware, verifyAdmin, updateEmployeeHandler);
 app.patch(['/api/v1/employees/:id', '/api/employees/:id', '/api/admin/employees/:id', '/api/v1/admin/employees/:id'], authMiddleware, verifyAdmin, updateEmployeeHandler);
 app.delete(['/api/v1/employees/:id', '/api/employees/:id', '/api/admin/employees/:id', '/api/v1/admin/employees/:id'], authMiddleware, verifyAdmin, deleteEmployeeHandler);
+
+// Factory Reset Endpoint (Admin Only with Password Verification)
+app.post(['/api/v1/admin/factory-reset', '/api/admin/factory-reset'], authMiddleware, verifyAdmin, (req, res) => {
+  const { password } = req.body;
+  const adminUser = USERS.find(u => u.id === req.user.id) || USERS[0];
+  if (!password || (adminUser && adminUser.password !== password)) {
+    return res.status(400).json({ success: false, message: 'Incorrect admin password. Factory reset cancelled.' });
+  }
+
+  products = [];
+  transactions = [];
+  USERS.length = 0;
+  USERS.push({
+    id: 'admin_1',
+    name: 'المدير العام (Admin)',
+    email: 'admin@apparel.com',
+    username: 'admin',
+    password: 'Admin@Apparel2026!',
+    role: 'admin',
+    jobTitle: 'المدير العام',
+    avatar: 'AD',
+    phone: '+20 100 000 0000',
+    address: 'الإدارة المركزية',
+    branch: 'المقر الرئيسي',
+    createdAt: new Date().toISOString()
+  });
+
+  res.json({ success: true, message: 'Factory reset completed successfully. Store is pristine.' });
+});
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  PRODUCT ROUTES  (auth required on all)
