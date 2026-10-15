@@ -282,47 +282,9 @@
     <!-- App Body Container with Desktop Navigation -->
     <main class="max-w-7xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 pb-24 md:pb-6 w-full flex-1 flex flex-col gap-4 sm:gap-6">
 
-      <!-- Navigation Tabs (Desktop & Tablet) -->
-      <nav class="hidden md:flex items-center gap-1.5 bg-white dark:bg-dark-card p-1.5 rounded-2xl border border-slate-200 dark:border-dark-border shadow-sm overflow-x-auto">
-        
-        <button onclick="switchTab('analytics')" id="tabBtn-analytics"
-          class="tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
-          <i class="fa-solid fa-chart-line text-brand-500"></i>
-          <span id="t-navAnalytics">لوحة التحليلات المالية</span>
-          <span id="badgeAdminOnly" class="text-[9px] bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30 px-1.5 py-0.2 rounded-full font-mono">ADMIN</span>
-        </button>
-
-        <button onclick="switchTab('inventory')" id="tabBtn-inventory"
-          class="tab-btn active-tab px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-brand-600 text-white shadow-md shadow-brand-500/20">
-          <i class="fa-solid fa-box-archive"></i>
-          <span id="t-navInventory">المنتجات والمخزون</span>
-        </button>
-
-        <button onclick="switchTab('pos')" id="tabBtn-pos"
-          class="tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
-          <i class="fa-solid fa-cart-shopping"></i>
-          <span id="t-navPos">نقطة البيع (POS)</span>
-        </button>
-
-        <button onclick="switchTab('returns')" id="tabBtn-returns"
-          class="tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
-          <i class="fa-solid fa-rotate-left"></i>
-          <span id="t-navReturns">المرتجعات</span>
-        </button>
-
-        <button onclick="switchTab('history')" id="tabBtn-history"
-          class="tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
-          <i class="fa-solid fa-clock-rotate-left"></i>
-          <span id="t-navHistory">سجل المعاملات</span>
-        </button>
-
-        <!-- Employees Directory Tab (Admin Only) -->
-        <button onclick="switchTab('employees')" id="tabBtn-employees"
-          class="tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
-          <i class="fa-solid fa-users-gear text-indigo-500"></i>
-          <span id="t-navEmployees">فريق العمل والموظفين</span>
-          <span class="text-[9px] bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30 px-1.5 py-0.2 rounded-full font-mono">ADMIN</span>
-        </button>
+      <!-- Navigation Tabs (Desktop & Tablet) - Strictly Rendered Dynamically via renderDesktopNav() -->
+      <nav id="desktopNavTabs" class="hidden md:flex items-center gap-1.5 bg-white dark:bg-dark-card p-1.5 rounded-2xl border border-slate-200 dark:border-dark-border shadow-sm overflow-x-auto">
+        <!-- Rendered dynamically by renderDesktopNav() according to user.role -->
       </nav>
 
       <!-- RBAC Security Banner -->
@@ -1925,6 +1887,7 @@
       // Re-render dynamic elements
       if (products.length) renderTable();
       if (typeof renderEmployeesTable === 'function') renderEmployeesTable();
+      renderDesktopNav();
       renderMobileDrawer();
     }
 
@@ -1946,6 +1909,41 @@
         drawer.classList.add('rtl:translate-x-full', 'ltr:-translate-x-full');
         overlay.classList.add('hidden');
       }
+    }
+
+    let currentActiveTab = 'inventory';
+
+    // ─── 3. DYNAMIC NAVIGATION WITH STRICT RBAC TAB ISOLATION ────────────────
+    function renderDesktopNav() {
+      const container = document.getElementById('desktopNavTabs');
+      if (!container) return;
+      const isAdmin = session?.user?.role === 'admin';
+      const t = I18N[currentLang] || I18N.ar;
+
+      const allTabs = [
+        { id: 'analytics', label: t.navAnalytics || 'لوحة التحليلات المالية', icon: 'fa-chart-line', iconColor: 'text-brand-500', adminOnly: true },
+        { id: 'inventory', label: t.navInventory || 'المنتجات والمخزون', icon: 'fa-box-archive', iconColor: '' },
+        { id: 'pos', label: t.navPos || 'نقطة البيع (POS)', icon: 'fa-cart-shopping', iconColor: '' },
+        { id: 'returns', label: t.navReturns || 'المرتجعات', icon: 'fa-rotate-left', iconColor: '' },
+        { id: 'history', label: t.navHistory || 'سجل المعاملات', icon: 'fa-clock-rotate-left', iconColor: '' },
+        { id: 'employees', label: t.navEmployees || (currentLang === 'ar' ? 'فريق العمل والموظفين' : 'Employees'), icon: 'fa-users-gear', iconColor: 'text-indigo-500', adminOnly: true },
+      ];
+
+      // Strict RBAC: filter out admin-only tabs completely from the DOM for employees
+      const visibleTabs = allTabs.filter(tab => !tab.adminOnly || isAdmin);
+
+      container.innerHTML = visibleTabs.map(tab => {
+        const isActive = tab.id === currentActiveTab;
+        const activeClasses = 'tab-btn active-tab px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-brand-600 text-white shadow-md shadow-brand-500/20';
+        const inactiveClasses = 'tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800';
+        return `
+          <button onclick="switchTab('${tab.id}')" id="tabBtn-${tab.id}"
+            class="${isActive ? activeClasses : inactiveClasses}">
+            <i class="fa-solid ${tab.icon} ${tab.iconColor || ''}"></i>
+            <span id="t-nav-${tab.id}">${tab.label}</span>
+          </button>
+        `;
+      }).join('');
     }
 
     function renderMobileDrawer() {
@@ -1973,7 +1971,7 @@
             <i class="fa-solid ${tab.icon} text-brand-500 w-5"></i>
             <span>${tab.label}</span>
           </div>
-          ${tab.adminOnly ? '<span class="text-[9px] bg-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded font-mono">ADMIN</span>' : ''}
+          ${(tab.adminOnly && isAdmin) ? '<span class="text-[9px] bg-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded font-mono">ADMIN</span>' : ''}
         </button>
       `).join('');
 
@@ -2114,8 +2112,6 @@
       const rbacDesc = document.getElementById('rbacBannerDesc');
       const rbacIcon = document.getElementById('rbacBannerIcon');
 
-      const analyticsTabBtn = document.getElementById('tabBtn-analytics');
-      const empTabBtn = document.getElementById('tabBtn-employees');
 
       const btnAddProductWrapper = document.getElementById('btnAddProductWrapper');
       const drawerEditProfileBtn = document.getElementById('drawerEditProfileBtn');
@@ -2128,8 +2124,7 @@
           : 'Full visibility enabled: wholesale costs, net profits, and financial analytics.';
         rbacIcon.className = 'w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg';
         document.querySelectorAll('.admin-col').forEach(el => el.classList.remove('hidden'));
-        document.getElementById('badgeAdminOnly').classList.remove('hidden');
-        document.getElementById('newCostPriceRow').classList.remove('hidden');
+        document.getElementById('newCostPriceRow')?.classList.remove('hidden');
         if (btnAddProductWrapper) btnAddProductWrapper.classList.remove('hidden');
         if (drawerEditProfileBtn) drawerEditProfileBtn.classList.remove('hidden');
         if (navUserPill) {
@@ -2138,10 +2133,9 @@
           navUserPill.classList.add('cursor-pointer');
         }
         
-        // Dynamic Navigation: Show Admin Tabs
-        if (analyticsTabBtn) analyticsTabBtn.classList.remove('hidden');
-        if (empTabBtn) empTabBtn.classList.remove('hidden');
-
+        currentActiveTab = 'analytics';
+        renderDesktopNav();
+        renderMobileDrawer();
         loadEmployees();
         switchTab('analytics');
         loadAnalytics();
@@ -2152,8 +2146,7 @@
           : 'Financial metrics, wholesale cost prices, and employee management strictly masked.';
         rbacIcon.className = 'w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg';
         document.querySelectorAll('.admin-col').forEach(el => el.classList.add('hidden'));
-        document.getElementById('badgeAdminOnly').classList.add('hidden');
-        document.getElementById('newCostPriceRow').classList.add('hidden');
+        document.getElementById('newCostPriceRow')?.classList.add('hidden');
         if (btnAddProductWrapper) btnAddProductWrapper.classList.add('hidden');
         if (drawerEditProfileBtn) drawerEditProfileBtn.classList.add('hidden');
         if (navUserPill) {
@@ -2162,16 +2155,15 @@
           navUserPill.classList.remove('cursor-pointer');
         }
         
-        // Dynamic Navigation: COMPLETELY REMOVE / HIDE Admin Tabs from DOM/Navbar for Employee
-        if (analyticsTabBtn) analyticsTabBtn.classList.add('hidden');
-        if (empTabBtn) empTabBtn.classList.add('hidden');
+        currentActiveTab = 'pos';
+        renderDesktopNav();
+        renderMobileDrawer();
 
         // Immediately redirect to POS view
         switchTab('pos');
       }
 
       loadProducts();
-      renderMobileDrawer();
     }
 
     // ─── 5. TAB SWITCHER (with Strict RBAC Route & View Protection Guard) ──────
@@ -2179,7 +2171,7 @@
       const isAdmin = session?.user?.role === 'admin';
 
       // Route & View Protection Guard:
-      // Prevent employees from manually navigating to Admin views via URL or inspect element
+      // Strictly prevent employees from navigating to Admin views via URL, code, or inspect element
       if (!isAdmin && (tabId === 'analytics' || tabId === 'employees')) {
         showToast(
           currentLang === 'ar' 
@@ -2188,7 +2180,10 @@
           'error'
         );
         tabId = 'pos'; // Force redirection to POS
+        try { window.location.hash = '#pos'; } catch (_) {}
       }
+
+      currentActiveTab = tabId;
 
       // Update URL hash safely
       try { history.replaceState(null, '', `#${tabId}`); } catch (_) {}
@@ -2211,6 +2206,11 @@
         const employeesContent = document.getElementById('tabContent-employees');
         if (analyticsContent) analyticsContent.classList.add('hidden');
         if (employeesContent) employeesContent.classList.add('hidden');
+        // Ensure admin tab buttons never exist in DOM for employees
+        const aBtn = document.getElementById('tabBtn-analytics');
+        const eBtn = document.getElementById('tabBtn-employees');
+        if (aBtn) aBtn.remove();
+        if (eBtn) eBtn.remove();
       }
 
       // Activate chosen
