@@ -211,7 +211,7 @@
           </button>
 
           <!-- User Role & Name Pill -->
-          <div onclick="openAdminProfileModal()" class="flex items-center gap-1.5 sm:gap-2 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-dark-border rounded-xl px-2 sm:px-2.5 py-1 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="تعديل حسابي وكلمة المرور">
+          <div id="navUserPill" onclick="openAdminProfileModal()" class="flex items-center gap-1.5 sm:gap-2 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-dark-border rounded-xl px-2 sm:px-2.5 py-1 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="تعديل حسابي وكلمة المرور">
             <div id="navUserAvatar" class="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-amber-500 text-slate-950 font-black text-[10px] sm:text-[11px] flex items-center justify-center shrink-0">A</div>
             <div class="hidden sm:block text-right rtl:text-right ltr:text-left">
               <div id="navUserName" class="text-xs font-bold leading-none text-slate-800 dark:text-slate-200 truncate max-w-[120px]">المدير العام</div>
@@ -259,7 +259,7 @@
             <div id="drawerUserRole" class="text-[10px] text-amber-600 dark:text-amber-400 font-bold truncate">المدير العام (ADMIN)</div>
           </div>
         </div>
-        <button onclick="toggleMobileDrawer(); openAdminProfileModal();" class="w-9 h-9 rounded-xl flex items-center justify-center bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border text-slate-600 dark:text-slate-300 hover:text-brand-600 active:scale-95 transition shrink-0" title="تعديل حسابي وكلمة المرور">
+        <button id="drawerEditProfileBtn" onclick="toggleMobileDrawer(); openAdminProfileModal();" class="w-9 h-9 rounded-xl flex items-center justify-center bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border text-slate-600 dark:text-slate-300 hover:text-brand-600 active:scale-95 transition shrink-0" title="تعديل حسابي وكلمة المرور">
           <i class="fa-solid fa-user-gear text-sm"></i>
         </button>
       </div>
@@ -550,7 +550,7 @@
             <i class="fa-solid fa-search absolute rtl:right-3 ltr:left-3 top-3.5 text-slate-400 text-xs"></i>
           </div>
 
-          <div class="flex items-center gap-2 w-full sm:w-auto">
+          <div id="btnAddProductWrapper" class="flex items-center gap-2 w-full sm:w-auto">
             <button onclick="openAddModal()"
               class="w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-2 shadow-md shadow-brand-500/20">
               <i class="fa-solid fa-plus"></i>
@@ -2117,6 +2117,10 @@
       const analyticsTabBtn = document.getElementById('tabBtn-analytics');
       const empTabBtn = document.getElementById('tabBtn-employees');
 
+      const btnAddProductWrapper = document.getElementById('btnAddProductWrapper');
+      const drawerEditProfileBtn = document.getElementById('drawerEditProfileBtn');
+      const navUserPill = document.getElementById('navUserPill');
+
       if (isAdmin) {
         rbacTitle.textContent = currentLang === 'ar' ? 'أنت مسجل بصلاحية المدير (Admin)' : 'Admin Session Active';
         rbacDesc.textContent = currentLang === 'ar' 
@@ -2126,6 +2130,13 @@
         document.querySelectorAll('.admin-col').forEach(el => el.classList.remove('hidden'));
         document.getElementById('badgeAdminOnly').classList.remove('hidden');
         document.getElementById('newCostPriceRow').classList.remove('hidden');
+        if (btnAddProductWrapper) btnAddProductWrapper.classList.remove('hidden');
+        if (drawerEditProfileBtn) drawerEditProfileBtn.classList.remove('hidden');
+        if (navUserPill) {
+          navUserPill.title = currentLang === 'ar' ? 'تعديل حسابي وكلمة المرور' : 'Edit profile & credentials';
+          navUserPill.onclick = openAdminProfileModal;
+          navUserPill.classList.add('cursor-pointer');
+        }
         
         // Dynamic Navigation: Show Admin Tabs
         if (analyticsTabBtn) analyticsTabBtn.classList.remove('hidden');
@@ -2143,6 +2154,13 @@
         document.querySelectorAll('.admin-col').forEach(el => el.classList.add('hidden'));
         document.getElementById('badgeAdminOnly').classList.add('hidden');
         document.getElementById('newCostPriceRow').classList.add('hidden');
+        if (btnAddProductWrapper) btnAddProductWrapper.classList.add('hidden');
+        if (drawerEditProfileBtn) drawerEditProfileBtn.classList.add('hidden');
+        if (navUserPill) {
+          navUserPill.title = jobTitleDisplay;
+          navUserPill.onclick = null;
+          navUserPill.classList.remove('cursor-pointer');
+        }
         
         // Dynamic Navigation: COMPLETELY REMOVE / HIDE Admin Tabs from DOM/Navbar for Employee
         if (analyticsTabBtn) analyticsTabBtn.classList.add('hidden');
@@ -2890,15 +2908,19 @@
             </td>
             <td class="p-3.5 text-center">
               <div class="flex items-center justify-center gap-1.5">
-                <button onclick="quickStock('${p.id}', 5)" class="text-[11px] bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 px-2 py-1 rounded-lg font-bold transition" title="Add 5 units">+5</button>
-                <button onclick="quickStock('${p.id}', -1)" class="text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-2 py-1 rounded-lg font-bold transition" title="Deduct 1 unit">-1</button>
-                
-                <!-- Delete / Archive Button -->
-                <button onclick="promptDeleteProduct('${p.id}', '${p.name.replace(/'/g, "\\'")}')"
-                  class="w-7 h-7 flex items-center justify-center rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition"
-                  title="${isAdmin ? (currentLang === 'ar' ? 'حذف / أرشفة المنتج' : 'Delete / Archive Product') : (currentLang === 'ar' ? 'صلاحية المدير مطلوبة للحذف' : 'Admin privilege required to delete')}">
-                  <i class="fa-solid fa-trash-can text-xs"></i>
-                </button>
+                ${isAdmin ? `
+                  <button onclick="quickStock('${p.id}', 5)" class="text-[11px] bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 px-2 py-1 rounded-lg font-bold transition" title="Add 5 units">+5</button>
+                  <button onclick="quickStock('${p.id}', -1)" class="text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-2 py-1 rounded-lg font-bold transition" title="Deduct 1 unit">-1</button>
+                  
+                  <!-- Delete / Archive Button -->
+                  <button onclick="promptDeleteProduct('${p.id}', '${p.name.replace(/'/g, "\\'")}')"
+                    class="w-7 h-7 flex items-center justify-center rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition"
+                    title="${currentLang === 'ar' ? 'حذف / أرشفة المنتج' : 'Delete / Archive Product'}">
+                    <i class="fa-solid fa-trash-can text-xs"></i>
+                  </button>
+                ` : `
+                  <span class="text-[10px] text-slate-400 dark:text-slate-500 italic">${currentLang === 'ar' ? 'عرض فقط' : 'View only'}</span>
+                `}
               </div>
             </td>
           `;
@@ -2938,12 +2960,14 @@
 
               <!-- Touch Friendly Action Bar -->
               <div class="flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-dark-border">
-                <button onclick="quickStock('${p.id}', 5)"
-                  class="h-11 px-3.5 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 font-black rounded-xl text-xs flex items-center justify-center gap-1 active:scale-95 transition"
-                  title="إضافة 5 قطع">+5 مخزون</button>
-                <button onclick="quickStock('${p.id}', -1)"
-                  class="h-11 px-3.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs flex items-center justify-center gap-1 active:scale-95 transition"
-                  title="خصم قطعة">-1</button>
+                ${isAdmin ? `
+                  <button onclick="quickStock('${p.id}', 5)"
+                    class="h-11 px-3.5 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 font-black rounded-xl text-xs flex items-center justify-center gap-1 active:scale-95 transition"
+                    title="إضافة 5 قطع">+5 مخزون</button>
+                  <button onclick="quickStock('${p.id}', -1)"
+                    class="h-11 px-3.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs flex items-center justify-center gap-1 active:scale-95 transition"
+                    title="خصم قطعة">-1</button>
+                ` : ''}
                 
                 <button onclick="quickSellProduct('${p.id}')"
                   class="h-11 flex-1 bg-brand-50 dark:bg-brand-950/40 hover:bg-brand-100 text-brand-600 dark:text-brand-300 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 active:scale-95 transition">
@@ -2995,6 +3019,10 @@
     }
 
     async function executeProductDeletion() {
+      if (session?.user?.role !== 'admin') {
+        showToast(currentLang === 'ar' ? 'عذراً! صلاحية حذف المنتجات مقتصرة على المدير (Admin) فقط.' : 'Access denied: Administrators only.', 'error');
+        return;
+      }
       if (!targetProductIdToDelete) return;
 
       const btn = document.getElementById('btnConfirmDeleteExec');
@@ -3044,6 +3072,12 @@
     }
 
     async function quickStock(id, adj) {
+      // Defense-in-depth: Admin-only guard (buttons should not render for employees anyway)
+      if (session?.user?.role !== 'admin') {
+        showToast(currentLang === 'ar' ? 'صلاحية المدير مطلوبة لتعديل المخزون يدوياً' : 'Admin privileges required to modify stock', 'error');
+        return;
+      }
+
       const p = products.find(x => x.id === id);
       if (!p) return;
 
@@ -3094,11 +3128,21 @@
     }
 
     // ─── 7. MODAL ADD PRODUCT ────────────────────────────────────────────────
-    function openAddModal() { document.getElementById('addModal').classList.remove('hidden'); }
+    function openAddModal() {
+      if (session?.user?.role !== 'admin') {
+        showToast(currentLang === 'ar' ? 'صلاحية المدير مطلوبة لإضافة المنتجات' : 'Admin privileges required to add products', 'error');
+        return;
+      }
+      document.getElementById('addModal').classList.remove('hidden');
+    }
     function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); }
 
     async function submitAddProduct(e) {
       e.preventDefault();
+      if (session?.user?.role !== 'admin') {
+        showToast(currentLang === 'ar' ? 'صلاحية المدير مطلوبة لإضافة المنتجات' : 'Admin privileges required to add products', 'error');
+        return;
+      }
       const body = {
         name: document.getElementById('newName').value.trim(),
         category: document.getElementById('newCategory').value,
@@ -3893,6 +3937,11 @@
     function openAdminProfileModal() {
       const u = session?.user;
       if (!u) return;
+      // Admin-only: Employees must not access credential editing
+      if (u.role !== 'admin') {
+        showToast(currentLang === 'ar' ? 'تعديل بيانات الحساب متاح للمدير فقط' : 'Account editing is restricted to Admin only', 'error');
+        return;
+      }
 
       document.getElementById('adminProfName').value = u.name || '';
       document.getElementById('adminProfJobTitle').value = u.jobTitle || (u.role === 'admin' ? 'المدير العام' : 'موظف مبيعات');
@@ -3989,6 +4038,10 @@
 
     // ─── FACTORY RESET SYSTEM ────────────────────────────────────────────────
     function openFactoryResetModal() {
+      if (session?.user?.role !== 'admin') {
+        showToast(currentLang === 'ar' ? 'صلاحية المدير مطلوبة لإعادة ضبط المصنع' : 'Admin privileges required for factory reset', 'error');
+        return;
+      }
       const modal = document.getElementById('factoryResetModal');
       const pwdInput = document.getElementById('factoryResetPassword');
       const errBox = document.getElementById('factoryResetError');
@@ -4004,6 +4057,10 @@
 
     async function confirmFactoryReset(e) {
       e.preventDefault();
+      if (session?.user?.role !== 'admin') {
+        showToast(currentLang === 'ar' ? 'صلاحية المدير مطلوبة لإعادة ضبط المصنع' : 'Admin privileges required for factory reset', 'error');
+        return;
+      }
       const enteredPwd = document.getElementById('factoryResetPassword').value;
       const errBox = document.getElementById('factoryResetError');
 

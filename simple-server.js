@@ -324,7 +324,7 @@ app.get('/api/v1/products', authMiddleware, (req, res) => {
 });
 
 // POST /api/v1/products
-app.post('/api/v1/products', authMiddleware, (req, res) => {
+app.post('/api/v1/products', authMiddleware, verifyAdmin, (req, res) => {
   const newProduct = {
     id: String(Date.now()),
     name:        req.body.name        || 'Untitled',
@@ -345,7 +345,7 @@ app.post('/api/v1/products', authMiddleware, (req, res) => {
 });
 
 // PATCH /api/v1/products/:id/stock
-app.patch('/api/v1/products/:id/stock', authMiddleware, (req, res) => {
+app.patch('/api/v1/products/:id/stock', authMiddleware, verifyAdmin, (req, res) => {
   const p = products.find(item => item.id === req.params.id);
   if (!p) return res.status(404).json({ success: false, message: 'Product not found.' });
 
