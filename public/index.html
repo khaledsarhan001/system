@@ -1322,6 +1322,10 @@
       ? 'http://localhost:5000/api/v1'
       : (window.location.port === '5000' ? `${window.location.origin}/api/v1` : '');
 
+    // Demo mode: active when no backend available (GitHub Pages, offline, etc.)
+    const DEMO_MODE = !API;
+    let demoTransactions = [];
+
     // ─── TRANSLATION DICTIONARY (Arabic / English) ───────────────────────────
     const I18N = {
       ar: {
@@ -1938,6 +1942,11 @@
     async function loadEmployees() {
       if (session?.user?.role !== 'admin') return;
 
+      if (DEMO_MODE) {
+        renderEmployeesTable();
+        return;
+      }
+
       try {
         const res = await fetch(`${API}/employees`, { headers: authHeaders() });
         const data = await res.json();
@@ -1952,6 +1961,7 @@
         renderEmployeesTable();
       } catch (err) {
         console.error('Error fetching employees:', err);
+        renderEmployeesTable();
       }
     }
 
@@ -2081,6 +2091,17 @@
         role: document.getElementById('newEmpRole').value
       };
 
+      if (DEMO_MODE) {
+        const initials = body.name ? body.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'EM';
+        const newEmp = { id: 'demo_' + Date.now(), ...body, avatar: initials, createdAt: new Date().toISOString() };
+        employeesList.push(newEmp);
+        closeAddEmployeeModal();
+        e.target.reset();
+        renderEmployeesTable();
+        showToast(currentLang === 'ar' ? `تم تسجيل وتفعيل حساب الموظف "${body.name}" بنجاح!` : `Employee account "${body.name}" created!`, 'success');
+        return;
+      }
+
       try {
         const res = await fetch(`${API}/employees`, {
           method: 'POST',
@@ -2122,6 +2143,15 @@
 
       const btn = document.getElementById('btnConfirmDeleteEmpExec');
       if (btn) btn.disabled = true;
+
+      if (DEMO_MODE) {
+        employeesList = employeesList.filter(emp => emp.id !== pendingDeleteEmployeeId);
+        renderEmployeesTable();
+        closeDeleteEmployeeModal();
+        showToast(currentLang === 'ar' ? 'تم حذف حساب الموظف بنجاح' : 'Employee account permanently deleted', 'success');
+        if (btn) btn.disabled = false;
+        return;
+      }
 
       try {
         const res = await fetch(`${API}/employees/${pendingDeleteEmployeeId}`, {
@@ -2309,6 +2339,24 @@
         role: document.getElementById('editEmpRole').value
       };
 
+      if (DEMO_MODE) {
+        const idx = employeesList.findIndex(item => item.id === id);
+        if (idx !== -1) {
+          employeesList[idx] = { ...employeesList[idx], ...body };
+          if (employeesList[idx].id === session?.user?.id || (session?.user?.username && employeesList[idx].username === session?.user?.username)) {
+            session.user.name = body.name;
+            session.user.email = body.email;
+            session.user.role = body.role;
+            localStorage.setItem('apparel_auth_session', JSON.stringify(session));
+            mountApplication();
+          }
+        }
+        closeEditEmployeeModal();
+        renderEmployeesTable();
+        showToast(currentLang === 'ar' ? `تم تحديث بيانات الموظف "${body.name}" بنجاح!` : `Employee profile "${body.name}" updated successfully!`, 'success');
+        return;
+      }
+
       try {
         const res = await fetch(`${API}/employees/${id}`, {
           method: 'PUT',
@@ -2326,7 +2374,6 @@
         const idx = employeesList.findIndex(item => item.id === id);
         if (idx !== -1) {
           employeesList[idx] = { ...employeesList[idx], ...data.data };
-          // If editing currently logged in user profile, update session as well
           if (employeesList[idx].id === session?.user?.id || (session?.user?.username && employeesList[idx].username === session?.user?.username)) {
             session.user.name = data.data.name;
             session.user.email = data.data.email;
@@ -2460,6 +2507,19 @@
       const btn = document.getElementById('btnConfirmDeleteExec');
       if (btn) btn.disabled = true;
 
+      if (DEMO_MODE) {
+        const deletedProduct = products.find(p => p.id === targetProductIdToDelete);
+        products = products.filter(p => p.id !== targetProductIdToDelete);
+        renderTable();
+        populateDropdowns();
+        renderLowStockAlerts();
+        closeDeleteModal();
+        showToast(currentLang === 'ar' ? `تم حذف "${deletedProduct?.name}" بنجاح!` : `Product deleted successfully!`, 'success');
+        if (btn) btn.disabled = false;
+        if (session?.user?.role === 'admin') loadAnalytics();
+        return;
+      }
+
       try {
         const res = await fetch(`${API}/products/${targetProductIdToDelete}`, {
           method: 'DELETE',
@@ -2472,26 +2532,16 @@
           return;
         }
 
-        // Remove from local array
         products = products.filter(p => p.id !== targetProductIdToDelete);
-
-        // Refresh UI
         renderTable();
         populateDropdowns();
         renderLowStockAlerts();
-
         closeDeleteModal();
         showToast(
-          currentLang === 'ar'
-            ? 'تم حذف وأرشفة المنتج بنجاح!'
-            : 'Product deleted and archived successfully!',
+          currentLang === 'ar' ? 'تم حذف وأرشفة المنتج بنجاح!' : 'Product deleted and archived successfully!',
           'success'
         );
-
-        // Refresh analytics if on admin tab
-        if (session?.user?.role === 'admin') {
-          loadAnalytics();
-        }
+        if (session?.user?.role === 'admin') loadAnalytics();
       } catch (err) {
         showToast('Network error during deletion', 'error');
       } finally {
@@ -2500,6 +2550,21 @@
     }
 
     async function quickStock(id, adj) {
+      const p = products.find(x => x.id === id);
+      if (!p) return;
+
+      if (DEMO_MODE) {
+        if (p.quantity + adj < 0) {
+          showToast(currentLang === 'ar' ? `لا يمكن التخفيض. المخزون الحالي: ${p.quantity}` : `Cannot reduce below zero. Stock: ${p.quantity}`, 'error');
+          return;
+        }
+        p.quantity += adj;
+        renderTable();
+        renderLowStockAlerts();
+        showToast(currentLang === 'ar' ? `تم تحديث المخزون (${adj > 0 ? '+' : ''}${adj})` : `Stock updated (${adj > 0 ? '+' : ''}${adj})`, 'success');
+        return;
+      }
+
       try {
         const res = await fetch(`${API}/products/${id}/stock`, {
           method: 'PATCH',
@@ -2511,8 +2576,6 @@
           showToast(data.message, 'error');
           return;
         }
-
-        const p = products.find(x => x.id === id);
         if (p) {
           p.quantity = data.data.quantity;
           renderTable();
@@ -2540,13 +2603,30 @@
       const body = {
         name: document.getElementById('newName').value.trim(),
         category: document.getElementById('newCategory').value,
-        sku: document.getElementById('newSku').value.trim() || undefined,
+        sku: document.getElementById('newSku').value.trim() || ('SKU-' + Math.floor(Math.random() * 9000 + 1000)),
         costPrice: parseFloat(document.getElementById('newCostPrice').value) || 0,
         retailPrice: parseFloat(document.getElementById('newRetailPrice').value),
         quantity: parseInt(document.getElementById('newQuantity').value, 10) || 0,
         sizes: ['S', 'M', 'L', 'XL'],
         colors: ['Black', 'Navy', 'White']
       };
+
+      if (DEMO_MODE) {
+        const newProduct = {
+          id: 'demo_prod_' + Date.now(),
+          ...body,
+          unitProfit: parseFloat((body.retailPrice - body.costPrice).toFixed(2)),
+          profitMargin: parseFloat(((body.retailPrice - body.costPrice) / body.retailPrice * 100).toFixed(1))
+        };
+        products.push(newProduct);
+        renderTable();
+        populateDropdowns();
+        renderLowStockAlerts();
+        closeAddModal();
+        e.target.reset();
+        showToast(currentLang === 'ar' ? `تم إضافة المنتج "${body.name}" بنجاح` : `Product "${body.name}" created successfully`, 'success');
+        return;
+      }
 
       try {
         const res = await fetch(`${API}/products`, {
@@ -2605,6 +2685,33 @@
       const quantity = parseInt(document.getElementById('posQuantity').value, 10) || 1;
       const p = products.find(x => x.id === productId);
 
+      if (!p) { showToast(currentLang === 'ar' ? 'يرجى اختيار منتج' : 'Please select a product', 'error'); return; }
+      if (p.quantity < quantity) {
+        showToast(currentLang === 'ar' ? `الكمية المطلوبة تتجاوز المخزون الحالي (${p.quantity} قطعة فقط)` : `Insufficient stock! Only ${p.quantity} units available`, 'error');
+        return;
+      }
+
+      if (DEMO_MODE) {
+        p.quantity -= quantity;
+        demoTransactions.unshift({
+          id: 'tx_' + Date.now(),
+          type: 'sale',
+          productId,
+          productName: p.name,
+          quantity,
+          total: p.retailPrice * quantity,
+          employee: session?.user?.name || 'Admin',
+          createdAt: new Date().toISOString()
+        });
+        renderTable();
+        populateDropdowns();
+        renderLowStockAlerts();
+        showToast(currentLang === 'ar' ? `✅ تم بيع ${quantity} قطعة من "${p.name}" — إجمالي: ${formatMoney(p.retailPrice * quantity)}` : `✅ Sold ${quantity}x "${p.name}" — Total: ${formatMoney(p.retailPrice * quantity)}`, 'success');
+        document.getElementById('posQuantity').value = 1;
+        switchTab('inventory');
+        return;
+      }
+
       try {
         const res = await fetch(`${API}/transactions/sale`, {
           method: 'POST',
@@ -2612,10 +2719,7 @@
           body: JSON.stringify({ productId, quantity })
         });
         const data = await res.json();
-        if (!res.ok) {
-          showToast(data.message, 'error');
-          return;
-        }
+        if (!res.ok) { showToast(data.message, 'error'); return; }
 
         if (p) p.quantity -= quantity;
         renderTable();
@@ -2636,6 +2740,31 @@
       const reason = document.getElementById('retReason').value.trim();
       const p = products.find(x => x.id === productId);
 
+      if (!p) { showToast(currentLang === 'ar' ? 'يرجى اختيار منتج' : 'Please select a product', 'error'); return; }
+
+      if (DEMO_MODE) {
+        p.quantity += quantity;
+        demoTransactions.unshift({
+          id: 'tx_' + Date.now(),
+          type: 'return',
+          productId,
+          productName: p.name,
+          quantity,
+          reason: reason || '—',
+          total: p.retailPrice * quantity,
+          employee: session?.user?.name || 'Admin',
+          createdAt: new Date().toISOString()
+        });
+        renderTable();
+        populateDropdowns();
+        renderLowStockAlerts();
+        showToast(currentLang === 'ar' ? `✅ تم استلام مرتجع ${quantity} قطعة من "${p.name}" وإعادتها للمخزن` : `✅ Return processed: ${quantity}x "${p.name}" restocked`, 'success');
+        document.getElementById('retReason').value = '';
+        document.getElementById('retQuantity').value = 1;
+        switchTab('inventory');
+        return;
+      }
+
       try {
         const res = await fetch(`${API}/transactions/return`, {
           method: 'POST',
@@ -2643,10 +2772,7 @@
           body: JSON.stringify({ productId, quantity, reason })
         });
         const data = await res.json();
-        if (!res.ok) {
-          showToast(data.message, 'error');
-          return;
-        }
+        if (!res.ok) { showToast(data.message, 'error'); return; }
 
         if (p) p.quantity += quantity;
         renderTable();
@@ -2662,35 +2788,49 @@
     }
 
     // ─── 9. TRANSACTION AUDIT LOG ────────────────────────────────────────────
+    function renderHistoryList(txList) {
+      const list = document.getElementById('historyList');
+      if (!list) return;
+
+      if (!txList || !txList.length) {
+        list.innerHTML = `<div class="p-8 text-center text-slate-400 bg-white dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border">
+          <i class="fa-solid fa-clock-rotate-left text-3xl mb-2 block opacity-30"></i>
+          ${currentLang === 'ar' ? 'لا توجد حركات مسجلة بعد' : 'No transactions recorded yet'}
+        </div>`;
+        return;
+      }
+
+      list.innerHTML = txList.map(tx => `
+        <div class="flex justify-between items-center p-4 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border shadow-sm text-xs">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white ${tx.type === 'sale' ? 'bg-emerald-500' : 'bg-amber-500'}">
+              <i class="fa-solid ${tx.type === 'sale' ? 'fa-bag-shopping' : 'fa-rotate-left'}"></i>
+            </div>
+            <div>
+              <div class="font-bold text-slate-900 dark:text-white">${tx.productName}</div>
+              <div class="text-slate-400 mt-0.5">${tx.type === 'sale' ? (currentLang === 'ar' ? 'بيع منتظم' : 'Sale') : (currentLang === 'ar' ? 'مرتجع عميل' : 'Return')} · ${tx.quantity} ${currentLang === 'ar' ? 'قطعة' : 'units'} · ${currentLang === 'ar' ? 'الموظف' : 'By'}: ${tx.employee || 'Admin'}</div>
+            </div>
+          </div>
+          <div class="text-left rtl:text-left ltr:text-right">
+            <div class="font-black ${tx.type === 'sale' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'} text-sm">${formatMoney(tx.total)}</div>
+            <div class="text-[10px] text-slate-400 font-mono mt-0.5">${new Date(tx.createdAt).toLocaleString(currentLang === 'ar' ? 'ar-EG' : 'en-US', { dateStyle: 'short', timeStyle: 'short' })}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
     async function loadHistory() {
+      if (DEMO_MODE) {
+        renderHistoryList(demoTransactions);
+        return;
+      }
+
       try {
         const res = await fetch(`${API}/transactions`, { headers: authHeaders() });
         const data = await res.json();
-        const list = document.getElementById('historyList');
-
-        if (!data.data.length) {
-          list.innerHTML = `<div class="p-8 text-center text-slate-400 bg-white dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border">لا توجد حركات مسجلة</div>`;
-          return;
-        }
-
-        list.innerHTML = data.data.map(tx => `
-          <div class="flex justify-between items-center p-4 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border shadow-sm text-xs">
-            <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white ${tx.type === 'sale' ? 'bg-emerald-500' : 'bg-amber-500'}">
-                <i class="fa-solid ${tx.type === 'sale' ? 'fa-bag-shopping' : 'fa-rotate-left'}"></i>
-              </div>
-              <div>
-                <div class="font-bold text-slate-900 dark:text-white">${tx.productName}</div>
-                <div class="text-slate-400 mt-0.5">${tx.type === 'sale' ? 'بيع منتظم' : 'مرتجع عميل'} · ${tx.quantity} قطعة · الموظف: ${tx.employee || 'Admin'}</div>
-              </div>
-            </div>
-            <div class="text-left rtl:text-left ltr:text-right">
-              <div class="font-black ${tx.type === 'sale' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'} text-sm">${formatMoney(tx.total)}</div>
-              <div class="text-[10px] text-slate-400 font-mono mt-0.5">${new Date(tx.createdAt).toLocaleDateString()}</div>
-            </div>
-          </div>
-        `).join('');
+        renderHistoryList(data.data || []);
       } catch (err) {
+        renderHistoryList(demoTransactions);
         console.error(err);
       }
     }
