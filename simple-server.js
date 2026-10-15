@@ -60,45 +60,25 @@ function verifyAdmin(req, res, next) {
 }
 const adminOnly = verifyAdmin;
 
-// ─── Seeded Users (with full fields: name, email, phone, address, branch, username, password) ──
+// ─── Production Seeded Users (Single default Admin account) ──────────────────
 const USERS = [
   {
-    id: 'u1',
-    name: 'أحمد المدير',
+    id: 'admin_1',
+    name: 'System Administrator',
     email: 'admin@apparel.com',
-    phone: '+20 100 123 4567',
-    address: 'شارع النصر، المعادي، القاهرة',
-    branch: 'الفرع الرئيسي - القاهرة',
     username: 'admin',
-    password: 'admin123',
+    password: 'Admin@Apparel2026!',
     role: 'admin',
-    avatar: 'AM',
+    avatar: 'SA',
+    phone: '',
+    address: '',
+    branch: 'Headquarters',
     createdAt: new Date().toISOString()
-  },
-  {
-    id: 'u2',
-    name: 'محمد الموظف',
-    email: 'employee@apparel.com',
-    phone: '+20 111 987 6543',
-    address: 'شارع الهرم، الجيزة',
-    branch: 'فرع الجيزة',
-    username: 'employee',
-    password: 'emp123',
-    role: 'employee',
-    avatar: 'MM',
-    createdAt: new Date().toISOString()
-  },
+  }
 ];
 
-// ─── In-Memory Product Store ──────────────────────────────────────────────────
-let products = [
-  { id: '1', name: 'Classic Crew Neck T-Shirt', category: 'shirts',    sku: 'SHR-CN-001', sizes: ['S','M','L','XL'],    colors: ['White','Black'],       costPrice: 8.50,  retailPrice: 24.99,  quantity: 150 },
-  { id: '2', name: 'Slim Fit Chinos',           category: 'pants',     sku: 'PNT-SF-002', sizes: ['S','M','L','XL'],    colors: ['Khaki','Navy'],        costPrice: 18.00, retailPrice: 49.99,  quantity: 80  },
-  { id: '3', name: 'Floral Summer Dress',        category: 'dresses',   sku: 'DRS-FL-003', sizes: ['XS','S','M','L'],   colors: ['Blue Floral'],         costPrice: 22.00, retailPrice: 64.99,  quantity: 45  },
-  { id: '4', name: 'Leather Bomber Jacket',      category: 'jackets',   sku: 'JKT-LB-004', sizes: ['M','L','XL'],       colors: ['Black','Brown'],       costPrice: 65.00, retailPrice: 189.99, quantity: 25  },
-  { id: '5', name: 'Running Shorts',             category: 'activewear',sku: 'ACT-RS-005', sizes: ['S','M','L'],        colors: ['Black','Grey'],        costPrice: 7.00,  retailPrice: 29.99,  quantity: 200 },
-];
-
+// ─── Clean Real Store: No hardcoded mock products or transactions ─────────────
+let products = [];
 let transactions = [];
 
 // ─── Helper: shape product based on role ─────────────────────────────────────
@@ -446,17 +426,15 @@ function getAnalyticsProfitHandler(req, res) {
   const sales   = transactions.filter(tx => tx.type === 'sale');
   const returns = transactions.filter(tx => tx.type === 'return');
 
-  const baseRevenue = 4850, baseCOGS = 2140;
-
-  const totalRevenue  = sales.reduce((s, tx) => s + tx.total, baseRevenue);
-  const totalCOGS     = sales.reduce((s, tx) => s + (tx.costPrice * tx.quantity), baseCOGS);
+  const totalRevenue  = sales.reduce((s, tx) => s + tx.total, 0);
+  const totalCOGS     = sales.reduce((s, tx) => s + ((tx.costPrice || 0) * tx.quantity), 0);
   const totalRefunded = returns.reduce((s, tx) => s + tx.total, 0);
 
   const netRevenue    = parseFloat((totalRevenue - totalRefunded).toFixed(2));
   const netProfit     = parseFloat((netRevenue - totalCOGS).toFixed(2));
   const margin        = netRevenue > 0 ? parseFloat(((netProfit / netRevenue) * 100).toFixed(2)) : 0;
 
-  // Top products by revenue
+  // Real top products from actual sales
   const productMap = {};
   sales.forEach(tx => {
     if (!productMap[tx.productId]) {
@@ -469,17 +447,17 @@ function getAnalyticsProfitHandler(req, res) {
 
   const topProducts = Object.values(productMap).map(p => {
     const profit = parseFloat((p.revenue - p.cost).toFixed(2));
-    const margin = p.revenue > 0 ? parseFloat(((profit / p.revenue) * 100).toFixed(1)) : 0;
+    const pMargin = p.revenue > 0 ? parseFloat(((profit / p.revenue) * 100).toFixed(1)) : 0;
     return {
       name: p.name,
       qty: p.qty,
       revenue: parseFloat(p.revenue.toFixed(2)),
       profit,
-      margin
+      margin: pMargin
     };
   }).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
 
-  // Category Breakdown
+  // Real category breakdown from actual sales
   const categoryBreakdown = {
     shirts: 0,
     pants: 0,
@@ -489,41 +467,80 @@ function getAnalyticsProfitHandler(req, res) {
     other: 0
   };
 
-  // Populate base sample sales distribution across categories
-  categoryBreakdown.shirts = 1450;
-  categoryBreakdown.pants = 1200;
-  categoryBreakdown.jackets = 1100;
-  categoryBreakdown.dresses = 650;
-  categoryBreakdown.activewear = 450;
-
-  // Add actual dynamic sales
   sales.forEach(tx => {
     const prod = products.find(p => p.id === tx.productId);
-    const cat = prod ? prod.category : 'other';
+    const cat = (prod ? prod.category : 'other') || 'other';
     if (categoryBreakdown[cat] !== undefined) {
-      categoryBreakdown[cat] += tx.total;
+      categoryBreakdown[cat] = parseFloat((categoryBreakdown[cat] + tx.total).toFixed(2));
     } else {
-      categoryBreakdown.other += tx.total;
+      categoryBreakdown.other = parseFloat((categoryBreakdown.other + tx.total).toFixed(2));
     }
   });
 
-  // Sales Trends (Daily/Weekly/Monthly)
-  const trends = {
-    daily: {
-      labels: ['09:00', '11:00', '13:00', '15:00', '17:00', '19:00', '21:00'],
-      revenue: [320, 580, 890, 720, 1140, 950, 480],
-      profit: [180, 310, 490, 390, 630, 520, 260]
-    },
-    weekly: {
-      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      revenue: [1200, 1450, 1800, 2100, 2900, 3400, 2600],
-      profit: [660, 790, 990, 1150, 1600, 1870, 1430]
-    },
-    monthly: {
-      labels: ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
-      revenue: [18500, 22400, 26800, 31200, 29500, 34800],
-      profit: [10200, 12300, 14700, 17100, 16200, 19100]
+  // Dynamic trends from real transaction timestamps (0s if no transactions)
+  const now = new Date();
+  const dailyLabels = ['09:00', '12:00', '15:00', '18:00', '21:00'];
+  const dailyRev = [0, 0, 0, 0, 0];
+  const dailyProf = [0, 0, 0, 0, 0];
+
+  const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const weeklyLabels = [];
+  const weeklyRev = [];
+  const weeklyProf = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    weeklyLabels.push(daysOfWeek[d.getDay()]);
+    weeklyRev.push(0);
+    weeklyProf.push(0);
+  }
+
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const monthlyLabels = [];
+  const monthlyRev = [];
+  const monthlyProf = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    monthlyLabels.push(monthNames[d.getMonth()]);
+    monthlyRev.push(0);
+    monthlyProf.push(0);
+  }
+
+  sales.forEach(tx => {
+    const txDate = new Date(tx.createdAt);
+    const profit = tx.total - ((tx.costPrice || 0) * tx.quantity);
+
+    if (txDate.toDateString() === now.toDateString()) {
+      const hour = txDate.getHours();
+      let slot = 0;
+      if (hour >= 21) slot = 4;
+      else if (hour >= 18) slot = 3;
+      else if (hour >= 15) slot = 2;
+      else if (hour >= 12) slot = 1;
+      else slot = 0;
+      dailyRev[slot] = parseFloat((dailyRev[slot] + tx.total).toFixed(2));
+      dailyProf[slot] = parseFloat((dailyProf[slot] + profit).toFixed(2));
     }
+
+    const diffDays = Math.floor((now - txDate) / (24 * 60 * 60 * 1000));
+    if (diffDays >= 0 && diffDays < 7) {
+      const idx = 6 - diffDays;
+      weeklyRev[idx] = parseFloat((weeklyRev[idx] + tx.total).toFixed(2));
+      weeklyProf[idx] = parseFloat((weeklyProf[idx] + profit).toFixed(2));
+    }
+
+    const diffMonths = (now.getFullYear() - txDate.getFullYear()) * 12 + (now.getMonth() - txDate.getMonth());
+    if (diffMonths >= 0 && diffMonths < 6) {
+      const idx = 5 - diffMonths;
+      monthlyRev[idx] = parseFloat((monthlyRev[idx] + tx.total).toFixed(2));
+      monthlyProf[idx] = parseFloat((monthlyProf[idx] + profit).toFixed(2));
+    }
+  });
+
+  const trends = {
+    daily: { labels: dailyLabels, revenue: dailyRev, profit: dailyProf },
+    weekly: { labels: weeklyLabels, revenue: weeklyRev, profit: weeklyProf },
+    monthly: { labels: monthlyLabels, revenue: monthlyRev, profit: monthlyProf }
   };
 
   res.json({
@@ -536,18 +553,12 @@ function getAnalyticsProfitHandler(req, res) {
       netProfit,
       profitMarginPercent:  margin,
       totalSaleTransactions: sales.length,
-      totalItemsInStock:    products.reduce((acc, p) => acc + p.quantity, 0),
+      totalItemsInStock:    products.reduce((acc, p) => acc + (p.quantity || 0), 0),
       lowStockCount:        products.filter(p => p.quantity <= 30).length,
     },
     trends,
     categoryBreakdown,
-    topProducts: topProducts.length ? topProducts : [
-      { name: 'Leather Bomber Jacket', qty: 18, revenue: 3419.82, profit: 2249.82, margin: 65.8 },
-      { name: 'Floral Summer Dress', qty: 24, revenue: 1559.76, profit: 1031.76, margin: 66.1 },
-      { name: 'Slim Fit Chinos', qty: 32, revenue: 1599.68, profit: 1023.68, margin: 64.0 },
-      { name: 'Classic Crew Neck T-Shirt', qty: 65, revenue: 1624.35, profit: 1071.85, margin: 66.0 },
-      { name: 'Running Shorts', qty: 40, revenue: 1199.60, profit: 919.60, margin: 76.7 }
-    ],
+    topProducts,
   });
 }
 
@@ -578,10 +589,9 @@ app.all(['/api/admin/*', '/api/v1/admin/*'], (req, res) => {
 const PORT = 5000;
 app.listen(PORT, () => {
   console.log('====================================================');
-  console.log('🚀  Apparel Inventory System is Live!');
+  console.log('🚀  Apparel Inventory System is Live (Production Mode)');
   console.log(`🌐  Open: http://localhost:${PORT}`);
   console.log('----------------------------------------------------');
-  console.log('👤  Admin    → username: admin    / password: admin123');
-  console.log('👤  Employee → username: employee / password: emp123');
+  console.log('👤  Admin → username: admin / password: Admin@Apparel2026!');
   console.log('====================================================');
 });

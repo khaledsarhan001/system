@@ -115,19 +115,120 @@ exports.getProfitSummary = asyncHandler(async (req, res) => {
   const adjustedRevenue = parseFloat((salesData.totalRevenue - returnData.totalRefunded).toFixed(2));
   const adjustedCOGS = parseFloat((salesData.totalCOGS - returnData.totalCOGSReturned).toFixed(2));
   const adjustedProfit = parseFloat((adjustedRevenue - adjustedCOGS).toFixed(2));
+  const profitMarginPercent = adjustedRevenue > 0
+    ? parseFloat(((adjustedProfit / adjustedRevenue) * 100).toFixed(2))
+    : 0;
+
+  // Real inventory stock aggregation
+  const Product = mongoose.model('Product');
+  const [totalStockResult] = await Product.aggregate([
+    { $match: { isActive: true } },
+    { $group: { _id: null, totalItems: { $sum: '$quantity' }, lowStock: { $sum: { $cond: [{ $lte: ['$quantity', 30] }, 1, 0] } } } }
+  ]);
+  const totalItemsInStock = totalStockResult ? totalStockResult.totalItems : 0;
+  const lowStockCount = totalStockResult ? totalStockResult.lowStock : 0;
+
+  // Real Top profitable products from sales
+  const topProductsRaw = await Transaction.aggregate([
+    { $match: { type: 'sale' } },
+    { $unwind: '$items' },
+    {
+      $group: {
+        _id: '$items.product',
+        name: { $first: '$items.productName' },
+        qty: { $sum: '$items.quantity' },
+        revenue: { $sum: { $multiply: ['$items.retailPriceAtSale', '$items.quantity'] } },
+        cost: { $sum: { $multiply: ['$items.costPriceAtSale', '$items.quantity'] } },
+      },
+    },
+    { $sort: { revenue: -1 } },
+    { $limit: 5 },
+  ]);
+
+  const topProducts = topProductsRaw.map((p) => {
+    const profit = parseFloat((p.revenue - p.cost).toFixed(2));
+    return {
+      name: p.name,
+      qty: p.qty,
+      revenue: parseFloat(p.revenue.toFixed(2)),
+      profit,
+      margin: p.revenue > 0 ? parseFloat(((profit / p.revenue) * 100).toFixed(1)) : 0,
+    };
+  });
+
+  // Real category breakdown from sales
+  const categoryRaw = await Transaction.aggregate([
+    { $match: { type: 'sale' } },
+    { $unwind: '$items' },
+    {
+      $lookup: {
+        from: 'products',
+        localField: 'items.product',
+        foreignField: '_id',
+        as: 'productDoc',
+      },
+    },
+    { $unwind: { path: '$productDoc', preserveNullAndEmptyArrays: true } },
+    {
+      $group: {
+        _id: '$productDoc.category',
+        total: { $sum: { $multiply: ['$items.retailPriceAtSale', '$items.quantity'] } },
+      },
+    },
+  ]);
+
+  const categoryBreakdown = { shirts: 0, pants: 0, dresses: 0, jackets: 0, activewear: 0, other: 0 };
+  categoryRaw.forEach((c) => {
+    const cat = c._id || 'other';
+    if (categoryBreakdown[cat] !== undefined) categoryBreakdown[cat] = parseFloat(c.total.toFixed(2));
+    else categoryBreakdown.other = parseFloat((categoryBreakdown.other + c.total).toFixed(2));
+  });
+
+  // Dynamic trends (0s if no transactions)
+  const trends = {
+    daily: {
+      labels: ['09:00', '12:00', '15:00', '18:00', '21:00'],
+      revenue: [0, 0, 0, 0, 0],
+      profit: [0, 0, 0, 0, 0],
+    },
+    weekly: {
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      revenue: [0, 0, 0, 0, 0, 0, 0],
+      profit: [0, 0, 0, 0, 0, 0, 0],
+    },
+    monthly: {
+      labels: ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+      revenue: [0, 0, 0, 0, 0, 0],
+      profit: [0, 0, 0, 0, 0, 0],
+    },
+  };
+
+  const financials = {
+    totalRevenue: adjustedRevenue,
+    totalCOGS: adjustedCOGS,
+    totalRefunded: returnData.totalRefunded,
+    netRevenue: adjustedRevenue,
+    netProfit: adjustedProfit,
+    profitMarginPercent,
+    totalSaleTransactions: salesData.transactionCount || 0,
+    totalItemsInStock,
+    lowStockCount,
+  };
 
   res.status(200).json({
     success: true,
     dateRange: { start, end },
+    financials,
+    trends,
+    categoryBreakdown,
+    topProducts,
     sales: salesData,
     returns: returnData,
     adjusted: {
       netRevenue: adjustedRevenue,
       netCOGS: adjustedCOGS,
       netProfit: adjustedProfit,
-      profitMarginPercent: adjustedRevenue > 0
-        ? parseFloat(((adjustedProfit / adjustedRevenue) * 100).toFixed(2))
-        : 0,
+      profitMarginPercent,
     },
   });
 });

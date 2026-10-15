@@ -19,23 +19,43 @@ const sendTokenResponse = (user, statusCode, res) => {
 
 // ─── POST /api/v1/auth/register ─── Admin creates accounts ───────
 exports.register = asyncHandler(async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, username, password, role = 'employee', phone = '', address = '', branch = '' } = req.body;
 
   // Only admins can create admin accounts
   if (role === 'admin' && req.user.role !== 'admin') {
     throw new ApiError('Only admins can create admin accounts.', 403);
   }
 
-  const user = await User.create({ name, email, password, role });
+  const normalizedUsername = (username || (email ? email.split('@')[0] : name.replace(/\s+/g, '').toLowerCase())).trim().toLowerCase();
+  const avatar = name ? name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'EM';
+
+  const user = await User.create({
+    name,
+    email: email.trim().toLowerCase(),
+    username: normalizedUsername,
+    password,
+    role,
+    phone,
+    address,
+    branch,
+    avatar
+  });
   sendTokenResponse(user, 201, res);
 });
 
 // ─── POST /api/v1/auth/login ──────────────────────────────────────
 exports.login = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const { email, username, identifier, loginIdentifier, password } = req.body;
+  const loginKey = (identifier || loginIdentifier || username || email || '').trim().toLowerCase();
 
-  // Explicitly select password (hidden by default)
-  const user = await User.findOne({ email }).select('+password');
+  if (!loginKey || !password) {
+    throw new ApiError('Username/email and password are required.', 400);
+  }
+
+  // Explicitly select password (hidden by default), allow login via username or email
+  const user = await User.findOne({
+    $or: [{ email: loginKey }, { username: loginKey }]
+  }).select('+password');
 
   if (!user) {
     throw new ApiError('Invalid credentials.', 401);

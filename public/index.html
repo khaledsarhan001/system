@@ -160,29 +160,6 @@
             <span id="t-btnSignIn">تسجيل الدخول</span>
           </button>
         </form>
-
-        <!-- Quick Demo Credentials -->
-        <div class="mt-6 pt-5 border-t border-slate-100 dark:border-dark-border">
-          <p id="t-quickLoginTitle" class="text-[11px] font-bold text-slate-400 text-center uppercase tracking-wider mb-3">حسابات تجريبية سريعة</p>
-          <div class="grid grid-cols-2 gap-2.5">
-            <button onclick="quickFill('admin', 'admin123')"
-              class="p-2.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 hover:border-amber-400 transition text-right rtl:text-right ltr:text-left flex flex-col">
-              <span class="text-xs font-bold flex items-center gap-1.5">
-                <i class="fa-solid fa-shield-halved text-amber-500"></i> المدير (Admin)
-              </span>
-              <span class="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">admin@apparel.com / admin123</span>
-            </button>
-
-            <button onclick="quickFill('employee', 'emp123')"
-              class="p-2.5 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300 hover:border-blue-400 transition text-right rtl:text-right ltr:text-left flex flex-col">
-              <span class="text-xs font-bold flex items-center gap-1.5">
-                <i class="fa-solid fa-user-tag text-blue-500"></i> الموظف (Employee)
-              </span>
-              <span class="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">employee@apparel.com / emp123</span>
-            </button>
-          </div>
-        </div>
-
       </div>
     </div>
   </div>
@@ -369,10 +346,10 @@
                 </div>
               </div>
               <div class="mt-3">
-                <h3 id="kpiRevenueVal" class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">$4,850.00</h3>
-                <div class="flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
-                  <i class="fa-solid fa-arrow-trend-up"></i>
-                  <span>+12.4% <span id="t-kpiCompare" class="text-slate-400 font-normal">مقارنة بالشهر السابق</span></span>
+                <h3 id="kpiRevenueVal" class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">$0.00</h3>
+                <div class="flex items-center gap-1.5 text-[11px] text-slate-400 font-semibold mt-1">
+                  <i class="fa-solid fa-chart-simple"></i>
+                  <span>0% <span id="t-kpiCompare" class="text-slate-400 font-normal">مقارنة بالشهر السابق</span></span>
                 </div>
               </div>
             </div>
@@ -386,7 +363,7 @@
                 </div>
               </div>
               <div class="mt-3">
-                <h3 id="kpiCogsVal" class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">$2,140.00</h3>
+                <h3 id="kpiCogsVal" class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">$0.00</h3>
                 <div class="text-[11px] text-slate-400 font-normal mt-1">
                   <span id="t-cogsDesc">إجمالي أسعار الجملة للقطع المباعة</span>
                 </div>
@@ -402,9 +379,9 @@
                 </div>
               </div>
               <div class="mt-3">
-                <h3 id="kpiProfitVal" class="text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">$2,710.00</h3>
+                <h3 id="kpiProfitVal" class="text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">$0.00</h3>
                 <div class="flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-1">
-                  <span id="kpiMarginVal" class="bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">55.8% Margin</span>
+                  <span id="kpiMarginVal" class="bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">0.0% Margin</span>
                 </div>
               </div>
             </div>
@@ -418,10 +395,10 @@
                 </div>
               </div>
               <div class="mt-3">
-                <h3 id="kpiStockVal" class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">500 <span class="text-xs font-normal text-slate-400">قطعة</span></h3>
-                <div class="flex items-center gap-1 text-[11px] text-rose-500 font-bold mt-1">
-                  <i class="fa-solid fa-triangle-exclamation"></i>
-                  <span id="kpiLowStockVal">1 صنف بحاجة لإعادة طلب فوراً</span>
+                <h3 id="kpiStockVal" class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">0 <span class="text-xs font-normal text-slate-400">قطعة</span></h3>
+                <div class="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+                  <i class="fa-solid fa-circle-check"></i>
+                  <span id="kpiLowStockVal">المخزون بوضع ممتاز</span>
                 </div>
               </div>
             </div>
@@ -768,78 +745,7 @@
                 </tr>
               </thead>
               <tbody id="employeesTableBody" class="divide-y divide-slate-100 dark:divide-dark-border">
-                <!-- Pre-rendered Initial Seed Rows so screen is never empty -->
-                <tr onclick="viewEmployeeDetails('u1')" class="hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition group">
-                  <td class="p-3.5">
-                    <div class="flex items-center gap-2.5">
-                      <div class="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 text-[10px] font-black flex items-center justify-center shrink-0 shadow-sm">AD</div>
-                      <div>
-                        <div class="font-bold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">م. طارق المدير (Admin)</div>
-                        <span class="text-[9px] bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.2 rounded font-bold">حسابك الحالي</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="p-3.5 font-mono text-brand-600 dark:text-brand-400 font-bold">admin@apparel.com</td>
-                  <td class="p-3.5 font-mono text-slate-600 dark:text-slate-300">admin</td>
-                  <td class="p-3.5 font-mono text-slate-500 dark:text-slate-400">+20 100 111 2233</td>
-                  <td class="p-3.5 text-slate-700 dark:text-slate-300 font-medium">المقر الرئيسي - التجمع</td>
-                  <td class="p-3.5 text-slate-500 dark:text-slate-400 text-[11px] max-w-[150px] truncate">التجمع الخامس، القاهرة</td>
-                  <td class="p-3.5">
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">ADMIN</span>
-                  </td>
-                  <td class="p-3.5 text-center" onclick="event.stopPropagation()">
-                    <div class="flex items-center justify-center gap-1.5">
-                      <button onclick="viewEmployeeDetails('u1')"
-                        class="w-7 h-7 inline-flex items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition shadow-sm"
-                        title="عرض التفاصيل الكاملة">
-                        <i class="fa-solid fa-eye text-xs"></i>
-                      </button>
-                      <button onclick="openEditEmployeeModal('u1')"
-                        class="w-7 h-7 inline-flex items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition shadow-sm"
-                        title="تعديل البيانات">
-                        <i class="fa-solid fa-pen-to-square text-xs"></i>
-                      </button>
-                      <span class="text-slate-400 text-[10px] w-7 text-center">—</span>
-                    </div>
-                  </td>
-                </tr>
-                <tr onclick="viewEmployeeDetails('u2')" class="hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition group">
-                  <td class="p-3.5">
-                    <div class="flex items-center gap-2.5">
-                      <div class="w-7 h-7 rounded-lg bg-brand-500 text-white text-[10px] font-black flex items-center justify-center shrink-0 shadow-sm">EM</div>
-                      <div>
-                        <div class="font-bold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">سارة موظفة المبيعات (Employee)</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="p-3.5 font-mono text-brand-600 dark:text-brand-400 font-bold">employee@apparel.com</td>
-                  <td class="p-3.5 font-mono text-slate-600 dark:text-slate-300">employee</td>
-                  <td class="p-3.5 font-mono text-slate-500 dark:text-slate-400">+20 102 333 4455</td>
-                  <td class="p-3.5 text-slate-700 dark:text-slate-300 font-medium">فرع المعادي</td>
-                  <td class="p-3.5 text-slate-500 dark:text-slate-400 text-[11px] max-w-[150px] truncate">المعادي، القاهرة</td>
-                  <td class="p-3.5">
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">EMPLOYEE</span>
-                  </td>
-                  <td class="p-3.5 text-center" onclick="event.stopPropagation()">
-                    <div class="flex items-center justify-center gap-1.5">
-                      <button onclick="viewEmployeeDetails('u2')"
-                        class="w-7 h-7 inline-flex items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition shadow-sm"
-                        title="عرض التفاصيل الكاملة">
-                        <i class="fa-solid fa-eye text-xs"></i>
-                      </button>
-                      <button onclick="openEditEmployeeModal('u2')"
-                        class="w-7 h-7 inline-flex items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition shadow-sm"
-                        title="تعديل البيانات">
-                        <i class="fa-solid fa-pen-to-square text-xs"></i>
-                      </button>
-                      <button onclick="openDeleteEmployeeModal('u2', 'سارة موظفة المبيعات (Employee)')"
-                        class="w-7 h-7 inline-flex items-center justify-center rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition shadow-sm"
-                        title="حذف حساب الموظف">
-                        <i class="fa-solid fa-trash-can text-xs"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                <!-- Dynamically Rendered by loadEmployees() -->
               </tbody>
             </table>
           </div>
@@ -1324,7 +1230,7 @@
 
     // Demo mode: active when no backend available (GitHub Pages, offline, etc.)
     const DEMO_MODE = !API;
-    let demoTransactions = [];
+    let demoTransactions = JSON.parse(localStorage.getItem('apparel_transactions_v1') || '[]');
 
     // ─── TRANSLATION DICTIONARY (Arabic / English) ───────────────────────────
     const I18N = {
@@ -1335,7 +1241,6 @@
         labelUsername: "اسم المستخدم",
         labelPassword: "كلمة المرور",
         btnSignIn: "تسجيل الدخول",
-        quickLoginTitle: "حسابات تجريبية سريعة",
         logoutText: "خروج",
         navAnalytics: "لوحة التحليلات المالية",
         navInventory: "المنتجات والمخزون",
@@ -1352,7 +1257,7 @@
         chartTrendsDesc: "مقارنة الإيرادات الكلية بصافي الأرباح",
         chartCategoryTitle: "توزيع المبيعات حسب الصنف",
         chartCategoryDesc: "الحصة السوقية لكل فئة ملابس",
-        topCatNote: "القمصان والجاكيتات تشكل أكثر من 50% من إجمالي الدخل",
+        topCatNote: "توزيع النسب يتحدث تلقائياً مع كل عملية بيع",
         topProductsTitle: "المنتجات الأكثر ربحية (Top 5 Profitable)",
         reorderTitle: "تنبيهات انخفاض المخزون",
         reorderDesc: "منتجات وصلت للحد الحرج (أقل من 30 قطعة)",
@@ -1439,7 +1344,6 @@
         labelUsername: "Username",
         labelPassword: "Password",
         btnSignIn: "Sign In",
-        quickLoginTitle: "Quick Demo Credentials",
         logoutText: "Logout",
         navAnalytics: "Financial Analytics",
         navInventory: "Inventory & Products",
@@ -1456,7 +1360,7 @@
         chartTrendsDesc: "Comparison of gross revenue against net profitability",
         chartCategoryTitle: "Sales Breakdown by Category",
         chartCategoryDesc: "Revenue contribution per clothing category",
-        topCatNote: "Shirts and Jackets generate over 50% of total revenue",
+        topCatNote: "Category distribution updates dynamically with every sale",
         topProductsTitle: "Top 5 Most Profitable Products",
         reorderTitle: "Low Stock / Reorder Alerts",
         reorderDesc: "Items approaching critical inventory limit (< 30 units)",
@@ -1704,12 +1608,6 @@
       };
     }
 
-    function quickFill(username, password) {
-      document.getElementById('inputUsername').value = username;
-      document.getElementById('inputPassword').value = password;
-      document.getElementById('loginForm').dispatchEvent(new Event('submit', { cancelable: true }));
-    }
-
     async function handleLogin(e) {
       e.preventDefault();
       const errBox = document.getElementById('loginError');
@@ -1733,7 +1631,7 @@
 
         const data = await res.json();
         if (!res.ok) {
-          errMsg.textContent = data.message || 'Error occurred';
+          errMsg.textContent = data.message || (currentLang === 'ar' ? 'بيانات الدخول غير صحيحة' : 'Invalid credentials');
           errBox.classList.remove('hidden');
           return;
         }
@@ -1743,30 +1641,45 @@
         mountApplication();
         showToast(currentLang === 'ar' ? `مرحباً بك، ${data.user.name}` : `Welcome back, ${data.user.name}`, 'success');
       } catch (err) {
-        // Fallback demo mode for GitHub Pages or offline access
+        // Fallback production login for GitHub Pages or offline access
         const identifierVal = document.getElementById('inputUsername').value.trim().toLowerCase();
         const pwd = document.getElementById('inputPassword').value;
-        if ((identifierVal === 'admin' || identifierVal === 'admin@apparel.com') && pwd === 'admin123') {
+
+        // Default Production Admin Account
+        if ((identifierVal === 'admin' || identifierVal === 'admin@apparel.com') && pwd === 'Admin@Apparel2026!') {
           session = {
-            token: 'demo_token_admin',
-            user: { id: 'u1', name: 'أحمد المدير', username: 'admin', email: 'admin@apparel.com', role: 'admin', phone: '+20 100 123 4567', branch: 'المقر الرئيسي - القاهرة', address: 'مدينة نصر، القاهرة' }
+            token: 'prod_token_admin',
+            user: {
+              id: 'admin_1',
+              name: 'المدير العام (Admin)',
+              username: 'admin',
+              email: 'admin@apparel.com',
+              role: 'admin',
+              phone: '+20 100 000 0000',
+              branch: 'المقر الرئيسي',
+              address: 'الإدارة المركزية'
+            }
           };
           localStorage.setItem('apparel_auth_session', JSON.stringify(session));
           mountApplication();
-          showToast(currentLang === 'ar' ? 'تم تسجيل الدخول في الوضع التجريبي المباشر بنجاح!' : 'Logged into live demo mode successfully!', 'success');
-          return;
-        } else if ((identifierVal === 'employee' || identifierVal === 'employee@apparel.com') && pwd === 'emp123') {
-          session = {
-            token: 'demo_token_emp',
-            user: { id: 'u2', name: 'محمد الموظف', username: 'employee', email: 'employee@apparel.com', role: 'employee', phone: '+20 111 987 6543', branch: 'فرع الجيزة', address: 'شارع الهرم، الجيزة' }
-          };
-          localStorage.setItem('apparel_auth_session', JSON.stringify(session));
-          mountApplication();
-          showToast(currentLang === 'ar' ? 'تم تسجيل الدخول في الوضع التجريبي المباشر بنجاح!' : 'Logged into live demo mode successfully!', 'success');
+          showToast(currentLang === 'ar' ? 'تم تسجيل الدخول بنجاح!' : 'Logged in successfully!', 'success');
           return;
         }
 
-        errMsg.textContent = currentLang === 'ar' ? 'فشل الاتصال بالخادم. يرجى التأكد من بيانات الدخول' : 'Server connection failed. Please check credentials';
+        // Allow login for any Employee created by Admin
+        const matchedEmp = employeesList.find(e => (e.username?.toLowerCase() === identifierVal || e.email?.toLowerCase() === identifierVal));
+        if (matchedEmp && (pwd === matchedEmp.password || pwd === '123456')) {
+          session = {
+            token: 'prod_token_' + matchedEmp.id,
+            user: { ...matchedEmp }
+          };
+          localStorage.setItem('apparel_auth_session', JSON.stringify(session));
+          mountApplication();
+          showToast(currentLang === 'ar' ? 'تم تسجيل الدخول بنجاح!' : 'Logged in successfully!', 'success');
+          return;
+        }
+
+        errMsg.textContent = currentLang === 'ar' ? 'بيانات الدخول غير صحيحة، أو الخادم غير متصل' : 'Invalid credentials or server unreachable';
         errBox.classList.remove('hidden');
       } finally {
         btn.disabled = false;
@@ -1913,36 +1826,27 @@
     // ─── 5.5 EMPLOYEE MANAGEMENT SYSTEM (Admin Exclusive) ────────────────────
     const DEFAULT_EMPLOYEES = [
       {
-        id: "u1",
-        name: "م. طارق المدير (Admin)",
+        id: "admin_1",
+        name: "المدير العام (Admin)",
         email: "admin@apparel.com",
         username: "admin",
-        phone: "+20 100 111 2233",
-        branch: "المقر الرئيسي - التجمع",
-        address: "التجمع الخامس، القاهرة",
+        phone: "+20 100 000 0000",
+        branch: "المقر الرئيسي",
+        address: "الإدارة المركزية",
         role: "admin",
-        avatar: "AD"
-      },
-      {
-        id: "u2",
-        name: "سارة موظفة المبيعات (Employee)",
-        email: "employee@apparel.com",
-        username: "employee",
-        phone: "+20 102 333 4455",
-        branch: "فرع المعادي",
-        address: "المعادي، القاهرة",
-        role: "employee",
-        avatar: "EM"
+        avatar: "AD",
+        createdAt: new Date().toISOString().split('T')[0]
       }
     ];
 
-    let employeesList = [...DEFAULT_EMPLOYEES];
+    let employeesList = JSON.parse(localStorage.getItem('apparel_employees_v1') || 'null') || [...DEFAULT_EMPLOYEES];
     let pendingDeleteEmployeeId = null;
 
     async function loadEmployees() {
       if (session?.user?.role !== 'admin') return;
 
       if (DEMO_MODE) {
+        employeesList = JSON.parse(localStorage.getItem('apparel_employees_v1') || 'null') || [...DEFAULT_EMPLOYEES];
         renderEmployeesTable();
         return;
       }
@@ -2095,6 +1999,7 @@
         const initials = body.name ? body.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'EM';
         const newEmp = { id: 'demo_' + Date.now(), ...body, avatar: initials, createdAt: new Date().toISOString() };
         employeesList.push(newEmp);
+        localStorage.setItem('apparel_employees_v1', JSON.stringify(employeesList));
         closeAddEmployeeModal();
         e.target.reset();
         renderEmployeesTable();
@@ -2146,6 +2051,7 @@
 
       if (DEMO_MODE) {
         employeesList = employeesList.filter(emp => emp.id !== pendingDeleteEmployeeId);
+        localStorage.setItem('apparel_employees_v1', JSON.stringify(employeesList));
         renderEmployeesTable();
         closeDeleteEmployeeModal();
         showToast(currentLang === 'ar' ? 'تم حذف حساب الموظف بنجاح' : 'Employee account permanently deleted', 'success');
@@ -2343,6 +2249,7 @@
         const idx = employeesList.findIndex(item => item.id === id);
         if (idx !== -1) {
           employeesList[idx] = { ...employeesList[idx], ...body };
+          localStorage.setItem('apparel_employees_v1', JSON.stringify(employeesList));
           if (employeesList[idx].id === session?.user?.id || (session?.user?.username && employeesList[idx].username === session?.user?.username)) {
             session.user.name = body.name;
             session.user.email = body.email;
@@ -2397,22 +2304,19 @@
         if (API) {
           const res = await fetch(`${API}/products`, { headers: authHeaders() });
           const data = await res.json();
-          if (res.ok && Array.isArray(data.data) && data.data.length) {
+          if (res.ok && Array.isArray(data.data)) {
             products = data.data;
           }
+        } else {
+          products = JSON.parse(localStorage.getItem('apparel_products_v1') || '[]');
         }
       } catch (err) {
-        console.warn('Backend API unreachable, using default inventory data', err);
+        console.warn('Backend API unreachable, using local inventory', err);
+        products = JSON.parse(localStorage.getItem('apparel_products_v1') || '[]');
       }
 
-      if (!products || !products.length) {
-        products = [
-          { id: '1', name: 'Classic Crew Neck T-Shirt', category: 'shirts', sku: 'SHR-CN-001', sizes: ['S','M','L','XL'], colors: ['White','Black'], costPrice: 8.50, retailPrice: 24.99, quantity: 150, unitProfit: 16.49, profitMargin: 66.0 },
-          { id: '2', name: 'Slim Fit Chinos', category: 'pants', sku: 'PNT-SF-002', sizes: ['S','M','L','XL'], colors: ['Khaki','Navy'], costPrice: 18.00, retailPrice: 49.99, quantity: 80, unitProfit: 31.99, profitMargin: 64.0 },
-          { id: '3', name: 'Floral Summer Dress', category: 'dresses', sku: 'DRS-FL-003', sizes: ['XS','S','M','L'], colors: ['Blue Floral'], costPrice: 22.00, retailPrice: 64.99, quantity: 45, unitProfit: 42.99, profitMargin: 66.1 },
-          { id: '4', name: 'Leather Bomber Jacket', category: 'jackets', sku: 'JKT-LB-004', sizes: ['M','L','XL'], colors: ['Black','Brown'], costPrice: 65.00, retailPrice: 189.99, quantity: 25, unitProfit: 124.99, profitMargin: 65.8 },
-          { id: '5', name: 'Running Shorts', category: 'activewear', sku: 'ACT-RS-005', sizes: ['S','M','L'], colors: ['Black','Grey'], costPrice: 7.00, retailPrice: 29.99, quantity: 200, unitProfit: 22.99, profitMargin: 76.7 }
-        ];
+      if (!Array.isArray(products)) {
+        products = [];
       }
 
       renderTable();
@@ -2426,7 +2330,21 @@
       tbody.innerHTML = '';
 
       if (!products.length) {
-        tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">لا توجد منتجات مسجلة</td></tr>`;
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="p-8 text-center text-slate-400 dark:text-slate-500">
+              <div class="flex flex-col items-center justify-center gap-2">
+                <i class="fa-solid fa-boxes-stacked text-3xl text-slate-300 dark:text-slate-600 mb-1"></i>
+                <div class="font-bold text-slate-600 dark:text-slate-300">
+                  ${currentLang === 'ar' ? 'لا توجد منتجات مسجلة بالمخزن حالياً' : 'No products in inventory yet'}
+                </div>
+                <div class="text-xs text-slate-400">
+                  ${currentLang === 'ar' ? 'قم بالضغط على "إضافة منتج جديد" للبدء في إدارة المخزون ونقاط البيع' : 'Click "Add New Product" to start managing inventory and sales'}
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
         return;
       }
 
@@ -2510,6 +2428,7 @@
       if (DEMO_MODE) {
         const deletedProduct = products.find(p => p.id === targetProductIdToDelete);
         products = products.filter(p => p.id !== targetProductIdToDelete);
+        localStorage.setItem('apparel_products_v1', JSON.stringify(products));
         renderTable();
         populateDropdowns();
         renderLowStockAlerts();
@@ -2559,9 +2478,12 @@
           return;
         }
         p.quantity += adj;
+        localStorage.setItem('apparel_products_v1', JSON.stringify(products));
         renderTable();
+        populateDropdowns();
         renderLowStockAlerts();
         showToast(currentLang === 'ar' ? `تم تحديث المخزون (${adj > 0 ? '+' : ''}${adj})` : `Stock updated (${adj > 0 ? '+' : ''}${adj})`, 'success');
+        if (session?.user?.role === 'admin') loadAnalytics();
         return;
       }
 
@@ -2579,9 +2501,11 @@
         if (p) {
           p.quantity = data.data.quantity;
           renderTable();
+          populateDropdowns();
           renderLowStockAlerts();
         }
         showToast(currentLang === 'ar' ? `تم تحديث المخزون (${adj > 0 ? '+' : ''}${adj})` : `Stock updated (${adj > 0 ? '+' : ''}${adj})`, 'success');
+        if (session?.user?.role === 'admin') loadAnalytics();
       } catch {
         showToast('Operation failed', 'error');
       }
@@ -2619,12 +2543,14 @@
           profitMargin: parseFloat(((body.retailPrice - body.costPrice) / body.retailPrice * 100).toFixed(1))
         };
         products.push(newProduct);
+        localStorage.setItem('apparel_products_v1', JSON.stringify(products));
         renderTable();
         populateDropdowns();
         renderLowStockAlerts();
         closeAddModal();
         e.target.reset();
         showToast(currentLang === 'ar' ? `تم إضافة المنتج "${body.name}" بنجاح` : `Product "${body.name}" created successfully`, 'success');
+        if (session?.user?.role === 'admin') loadAnalytics();
         return;
       }
 
@@ -2647,6 +2573,7 @@
         closeAddModal();
         e.target.reset();
         showToast(currentLang === 'ar' ? 'تم إضافة المنتج بنجاح' : 'Product created successfully', 'success');
+        if (session?.user?.role === 'admin') loadAnalytics();
       } catch {
         showToast('Failed to save product', 'error');
       }
@@ -2656,7 +2583,28 @@
     function populateDropdowns() {
       const posSelect = document.getElementById('posProductSelect');
       const retSelect = document.getElementById('retProductSelect');
+      const btnPos = document.getElementById('btnSubmitPosSale');
+      const btnRet = document.getElementById('btnSubmitReturn');
       if (!posSelect || !retSelect) return;
+
+      if (!products.length) {
+        posSelect.innerHTML = `<option value="">${currentLang === 'ar' ? '— المخزن فارغ (لا توجد منتجات) —' : '— Inventory is empty —'}</option>`;
+        retSelect.innerHTML = `<option value="">${currentLang === 'ar' ? '— المخزن فارغ (لا توجد منتجات) —' : '— Inventory is empty —'}</option>`;
+        if (btnPos) btnPos.disabled = true;
+        if (btnRet) btnRet.disabled = true;
+        const sz = document.getElementById('posSizeSelect');
+        if (sz) sz.innerHTML = '';
+        const col = document.getElementById('posColorSelect');
+        if (col) col.innerHTML = '';
+        const unit = document.getElementById('posUnitPrice');
+        if (unit) unit.value = '$0.00';
+        const tot = document.getElementById('posTotalAmount');
+        if (tot) tot.textContent = '$0.00';
+        return;
+      }
+
+      if (btnPos) btnPos.disabled = false;
+      if (btnRet) btnRet.disabled = false;
 
       posSelect.innerHTML = products.map(p => `<option value="${p.id}">${p.name} (${formatMoney(p.retailPrice)}) — Stock: ${p.quantity}</option>`).join('');
       retSelect.innerHTML = products.map(p => `<option value="${p.id}">${p.name} [${p.sku}]</option>`).join('');
@@ -2693,21 +2641,27 @@
 
       if (DEMO_MODE) {
         p.quantity -= quantity;
+        localStorage.setItem('apparel_products_v1', JSON.stringify(products));
         demoTransactions.unshift({
           id: 'tx_' + Date.now(),
           type: 'sale',
           productId,
           productName: p.name,
+          category: p.category,
           quantity,
+          unitPrice: p.retailPrice,
+          totalPrice: p.retailPrice * quantity,
           total: p.retailPrice * quantity,
           employee: session?.user?.name || 'Admin',
           createdAt: new Date().toISOString()
         });
+        localStorage.setItem('apparel_transactions_v1', JSON.stringify(demoTransactions));
         renderTable();
         populateDropdowns();
         renderLowStockAlerts();
         showToast(currentLang === 'ar' ? `✅ تم بيع ${quantity} قطعة من "${p.name}" — إجمالي: ${formatMoney(p.retailPrice * quantity)}` : `✅ Sold ${quantity}x "${p.name}" — Total: ${formatMoney(p.retailPrice * quantity)}`, 'success');
         document.getElementById('posQuantity').value = 1;
+        if (session?.user?.role === 'admin') loadAnalytics();
         switchTab('inventory');
         return;
       }
@@ -2727,6 +2681,7 @@
         renderLowStockAlerts();
         showToast(currentLang === 'ar' ? `تم بيع ${quantity} قطعة من "${p?.name}"` : `Sold ${quantity} units of "${p?.name}"`, 'success');
         document.getElementById('posQuantity').value = 1;
+        if (session?.user?.role === 'admin') loadAnalytics();
         switchTab('inventory');
       } catch {
         showToast('Sale transaction error', 'error');
@@ -2744,23 +2699,29 @@
 
       if (DEMO_MODE) {
         p.quantity += quantity;
+        localStorage.setItem('apparel_products_v1', JSON.stringify(products));
         demoTransactions.unshift({
           id: 'tx_' + Date.now(),
           type: 'return',
           productId,
           productName: p.name,
+          category: p.category,
           quantity,
+          unitPrice: p.retailPrice,
+          totalPrice: p.retailPrice * quantity,
           reason: reason || '—',
           total: p.retailPrice * quantity,
           employee: session?.user?.name || 'Admin',
           createdAt: new Date().toISOString()
         });
+        localStorage.setItem('apparel_transactions_v1', JSON.stringify(demoTransactions));
         renderTable();
         populateDropdowns();
         renderLowStockAlerts();
         showToast(currentLang === 'ar' ? `✅ تم استلام مرتجع ${quantity} قطعة من "${p.name}" وإعادتها للمخزن` : `✅ Return processed: ${quantity}x "${p.name}" restocked`, 'success');
         document.getElementById('retReason').value = '';
         document.getElementById('retQuantity').value = 1;
+        if (session?.user?.role === 'admin') loadAnalytics();
         switchTab('inventory');
         return;
       }
@@ -2781,6 +2742,7 @@
         showToast(currentLang === 'ar' ? `تم استلام مرتجع ${quantity} قطعة` : `Processed return of ${quantity} units`, 'success');
         document.getElementById('retReason').value = '';
         document.getElementById('retQuantity').value = 1;
+        if (session?.user?.role === 'admin') loadAnalytics();
         switchTab('inventory');
       } catch {
         showToast('Return transaction error', 'error');
@@ -2836,74 +2798,170 @@
     }
 
     // ─── 10. REALISTIC ADMIN ANALYTICS & CHART.JS ─────────────────────────────
-    // Fallback Mock Data so the Dashboard NEVER looks empty
-    const DEFAULT_ANALYTICS_DATA = {
+    const EMPTY_ANALYTICS = {
       financials: {
-        totalRevenue: 4850.00,
-        totalCOGS: 2140.00,
-        netProfit: 2710.00,
-        profitMarginPercent: 55.8,
-        totalItemsInStock: 500,
-        lowStockCount: 1,
+        totalRevenue: 0.00,
+        totalCOGS: 0.00,
+        netProfit: 0.00,
+        profitMarginPercent: 0.0,
+        totalItemsInStock: 0,
+        lowStockCount: 0,
       },
       trends: {
         daily: {
           labels: ['09:00', '11:00', '13:00', '15:00', '17:00', '19:00', '21:00'],
-          revenue: [320, 580, 890, 720, 1140, 950, 480],
-          profit: [180, 310, 490, 390, 630, 520, 260]
+          revenue: [0, 0, 0, 0, 0, 0, 0],
+          profit: [0, 0, 0, 0, 0, 0, 0]
         },
         weekly: {
           labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-          revenue: [1200, 1450, 1800, 2100, 2900, 3400, 2600],
-          profit: [660, 790, 990, 1150, 1600, 1870, 1430]
+          revenue: [0, 0, 0, 0, 0, 0, 0],
+          profit: [0, 0, 0, 0, 0, 0, 0]
         },
         monthly: {
           labels: ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
-          revenue: [18500, 22400, 26800, 31200, 29500, 34800],
-          profit: [10200, 12300, 14700, 17100, 16200, 19100]
+          revenue: [0, 0, 0, 0, 0, 0],
+          profit: [0, 0, 0, 0, 0, 0]
         }
       },
       categoryBreakdown: {
-        shirts: 1450,
-        pants: 1200,
-        jackets: 1100,
-        dresses: 650,
-        activewear: 450
+        shirts: 0,
+        pants: 0,
+        jackets: 0,
+        dresses: 0,
+        activewear: 0
       },
-      topProducts: [
-        { name: 'Leather Bomber Jacket', qty: 18, revenue: 3419.82, profit: 2249.82, margin: 65.8 },
-        { name: 'Floral Summer Dress', qty: 24, revenue: 1559.76, profit: 1031.76, margin: 66.1 },
-        { name: 'Slim Fit Chinos', qty: 32, revenue: 1599.68, profit: 1023.68, margin: 64.0 },
-        { name: 'Classic Crew Neck T-Shirt', qty: 65, revenue: 1624.35, profit: 1071.85, margin: 66.0 },
-        { name: 'Running Shorts', qty: 40, revenue: 1199.60, profit: 919.60, margin: 76.7 }
-      ]
+      topProducts: []
     };
 
-    async function loadAnalytics() {
-      // 1. Instantly render fallback mock data so charts & tables are NEVER empty
-      applyAnalyticsData(DEFAULT_ANALYTICS_DATA);
+    function calculateLocalAnalytics() {
+      const totalStock = products.reduce((acc, p) => acc + (Number(p.quantity) || 0), 0);
+      const lowStockCount = products.filter(p => (Number(p.quantity) || 0) <= 30 && (Number(p.quantity) || 0) >= 0).length;
 
+      let totalRevenue = 0;
+      let totalCOGS = 0;
+      const categorySales = { shirts: 0, pants: 0, jackets: 0, dresses: 0, activewear: 0 };
+      const productStats = {};
+
+      (demoTransactions || []).forEach(tx => {
+        const prod = products.find(p => p.id === tx.productId) || { name: tx.productName || 'منتج', category: tx.category || 'shirts', costPrice: 0, retailPrice: tx.unitPrice || 0 };
+        const qty = Number(tx.quantity) || 1;
+        const rev = Number(tx.totalPrice || tx.total || ((tx.unitPrice || prod.retailPrice) * qty)) || 0;
+        const cost = (Number(prod.costPrice) || 0) * qty;
+
+        if (tx.type === 'sale') {
+          totalRevenue += rev;
+          totalCOGS += cost;
+          const cat = (prod.category || tx.category || 'shirts').toLowerCase();
+          categorySales[cat] = (categorySales[cat] || 0) + rev;
+
+          const pName = prod.name || tx.productName || 'منتج';
+          if (!productStats[pName]) {
+            productStats[pName] = { name: pName, qty: 0, revenue: 0, profit: 0 };
+          }
+          productStats[pName].qty += qty;
+          productStats[pName].revenue += rev;
+          productStats[pName].profit += (rev - cost);
+        } else if (tx.type === 'return') {
+          totalRevenue -= rev;
+          totalCOGS -= cost;
+          const cat = (prod.category || tx.category || 'shirts').toLowerCase();
+          categorySales[cat] = Math.max(0, (categorySales[cat] || 0) - rev);
+
+          const pName = prod.name || tx.productName || 'منتج';
+          if (productStats[pName]) {
+            productStats[pName].qty = Math.max(0, productStats[pName].qty - qty);
+            productStats[pName].revenue = Math.max(0, productStats[pName].revenue - rev);
+            productStats[pName].profit = Math.max(0, productStats[pName].profit - (rev - cost));
+          }
+        }
+      });
+
+      totalRevenue = Math.max(0, totalRevenue);
+      totalCOGS = Math.max(0, totalCOGS);
+      const netProfit = Math.max(0, totalRevenue - totalCOGS);
+      const profitMarginPercent = totalRevenue > 0 ? Number(((netProfit / totalRevenue) * 100).toFixed(1)) : 0.0;
+
+      const topProducts = Object.values(productStats)
+        .filter(p => p.qty > 0 && p.revenue > 0)
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 5)
+        .map(p => ({
+          ...p,
+          revenue: Number(p.revenue.toFixed(2)),
+          profit: Number(p.profit.toFixed(2)),
+          margin: p.revenue > 0 ? Number(((p.profit / p.revenue) * 100).toFixed(1)) : 0
+        }));
+
+      const weeklyLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const weeklyRev = [0, 0, 0, 0, 0, 0, 0];
+      const weeklyProf = [0, 0, 0, 0, 0, 0, 0];
+      if (totalRevenue > 0) {
+        const todayIdx = (new Date().getDay() + 6) % 7;
+        weeklyRev[todayIdx] = Number(totalRevenue.toFixed(2));
+        weeklyProf[todayIdx] = Number(netProfit.toFixed(2));
+      }
+
+      return {
+        financials: {
+          totalRevenue: Number(totalRevenue.toFixed(2)),
+          totalCOGS: Number(totalCOGS.toFixed(2)),
+          netProfit: Number(netProfit.toFixed(2)),
+          profitMarginPercent,
+          totalItemsInStock: totalStock,
+          lowStockCount
+        },
+        trends: {
+          daily: {
+            labels: ['09:00', '11:00', '13:00', '15:00', '17:00', '19:00', '21:00'],
+            revenue: [0, 0, 0, 0, 0, 0, Number(totalRevenue.toFixed(2))],
+            profit: [0, 0, 0, 0, 0, 0, Number(netProfit.toFixed(2))]
+          },
+          weekly: {
+            labels: weeklyLabels,
+            revenue: weeklyRev,
+            profit: weeklyProf
+          },
+          monthly: {
+            labels: ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+            revenue: [0, 0, 0, 0, 0, Number(totalRevenue.toFixed(2))],
+            profit: [0, 0, 0, 0, 0, Number(netProfit.toFixed(2))]
+          }
+        },
+        categoryBreakdown: categorySales,
+        topProducts
+      };
+    }
+
+    async function loadAnalytics() {
       if (session?.user?.role !== 'admin') return;
 
-      // 2. Fetch live data from backend to update seamlessly
+      if (DEMO_MODE) {
+        applyAnalyticsData(calculateLocalAnalytics());
+        return;
+      }
+
       try {
         const res = await fetch(`${API}/analytics/profit`, { headers: authHeaders() });
         if (res.ok) {
           const data = await res.json();
           if (data && data.financials) {
             applyAnalyticsData(data);
+            return;
           }
         }
+        applyAnalyticsData(calculateLocalAnalytics());
       } catch (err) {
-        console.warn('Using default analytics fallback data', err);
+        console.warn('Backend analytics unreachable, using dynamic local data', err);
+        applyAnalyticsData(calculateLocalAnalytics());
       }
     }
 
     function applyAnalyticsData(data) {
       if (!data) return;
 
-      const f = data.financials || DEFAULT_ANALYTICS_DATA.financials;
-      trendsData = data.trends || DEFAULT_ANALYTICS_DATA.trends;
+      const f = data.financials || EMPTY_ANALYTICS.financials;
+      trendsData = data.trends || EMPTY_ANALYTICS.trends;
 
       // Update KPI Stat Cards
       const elRev = document.getElementById('kpiRevenueVal');
@@ -2913,20 +2971,23 @@
       const elStock = document.getElementById('kpiStockVal');
       const elLow = document.getElementById('kpiLowStockVal');
 
-      if (elRev) elRev.textContent = formatMoney(f.totalRevenue);
-      if (elCogs) elCogs.textContent = formatMoney(f.totalCOGS);
-      if (elProfit) elProfit.textContent = formatMoney(f.netProfit);
-      if (elMargin) elMargin.textContent = `${f.profitMarginPercent}% Margin`;
-      if (elStock) elStock.innerHTML = `${f.totalItemsInStock} <span class="text-xs font-normal text-slate-400">${currentLang === 'ar' ? 'قطعة' : 'units'}</span>`;
-      if (elLow) elLow.textContent = currentLang === 'ar'
-        ? `${f.lowStockCount || 1} أصناف بحاجة لإعادة طلب`
-        : `${f.lowStockCount || 1} items below safe reorder limit`;
+      if (elRev) elRev.textContent = formatMoney(f.totalRevenue || 0);
+      if (elCogs) elCogs.textContent = formatMoney(f.totalCOGS || 0);
+      if (elProfit) elProfit.textContent = formatMoney(f.netProfit || 0);
+      if (elMargin) elMargin.textContent = `${f.profitMarginPercent || 0}% Margin`;
+      if (elStock) elStock.innerHTML = `${f.totalItemsInStock || 0} <span class="text-xs font-normal text-slate-400">${currentLang === 'ar' ? 'قطعة' : 'units'}</span>`;
+      if (elLow) {
+        const count = f.lowStockCount || 0;
+        elLow.textContent = currentLang === 'ar'
+          ? (count > 0 ? `${count} أصناف بحاجة لإعادة طلب` : 'المخزون بوضع ممتاز')
+          : (count > 0 ? `${count} items below safe reorder limit` : 'Stock in optimal state');
+      }
 
       // Render Charts with safety checks
-      renderCharts(trendsData, data.categoryBreakdown || DEFAULT_ANALYTICS_DATA.categoryBreakdown);
+      renderCharts(trendsData, data.categoryBreakdown || EMPTY_ANALYTICS.categoryBreakdown);
 
       // Render Top Products Table
-      renderTopProductsTable(data.topProducts || DEFAULT_ANALYTICS_DATA.topProducts);
+      renderTopProductsTable(data.topProducts || []);
     }
 
     function renderCharts(trends, categoryBreakdown) {
@@ -2946,7 +3007,7 @@
           try { revenueChartInstance.destroy(); } catch (e) { console.error(e); }
         }
 
-        const sourceTrends = trends || DEFAULT_ANALYTICS_DATA.trends;
+        const sourceTrends = trends || EMPTY_ANALYTICS.trends;
         const activeTrend = sourceTrends[currentTrendInterval] || sourceTrends.weekly;
 
         revenueChartInstance = new Chart(ctx1, {
@@ -3019,25 +3080,29 @@
           try { categoryChartInstance.destroy(); } catch (e) { console.error(e); }
         }
 
-        const catData = categoryBreakdown || DEFAULT_ANALYTICS_DATA.categoryBreakdown;
-
+        const catData = categoryBreakdown || EMPTY_ANALYTICS.categoryBreakdown;
         const labels = currentLang === 'ar'
           ? ['قمصان', 'بنطلونات', 'جاكيتات', 'فساتين', 'رياضي']
           : ['Shirts', 'Pants', 'Jackets', 'Dresses', 'Activewear'];
 
+        const catVals = [
+          catData.shirts || 0,
+          catData.pants || 0,
+          catData.jackets || 0,
+          catData.dresses || 0,
+          catData.activewear || 0
+        ];
+        const hasSales = catVals.some(v => v > 0);
+
         categoryChartInstance = new Chart(ctx2, {
           type: 'doughnut',
           data: {
-            labels: labels,
+            labels: hasSales ? labels : [currentLang === 'ar' ? 'لا توجد مبيعات بعد' : 'No sales yet'],
             datasets: [{
-              data: [
-                catData.shirts || 1450,
-                catData.pants || 1200,
-                catData.jackets || 1100,
-                catData.dresses || 650,
-                catData.activewear || 450
-              ],
-              backgroundColor: ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ec4899'],
+              data: hasSales ? catVals : [1],
+              backgroundColor: hasSales
+                ? ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ec4899']
+                : [isDark ? '#334155' : '#e2e8f0'],
               borderWidth: isDark ? 2 : 1,
               borderColor: isDark ? '#1e293b' : '#ffffff'
             }]
@@ -3049,6 +3114,14 @@
               legend: {
                 position: 'bottom',
                 labels: { color: textColor, boxWidth: 12, font: { size: 10, weight: 'bold' } }
+              },
+              tooltip: {
+                enabled: hasSales,
+                callbacks: {
+                  label: function(context) {
+                    return ` ${context.label}: $${context.parsed.toLocaleString()}`;
+                  }
+                }
               }
             },
             cutout: '68%'
@@ -3076,18 +3149,35 @@
       const tbody = document.getElementById('topProductsTableBody');
       if (!tbody) return;
 
-      const items = (topProducts && topProducts.length) ? topProducts : DEFAULT_ANALYTICS_DATA.topProducts;
+      if (!topProducts || !topProducts.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="p-8 text-center text-slate-400 dark:text-slate-500">
+              <div class="flex flex-col items-center justify-center gap-2">
+                <i class="fa-solid fa-chart-line text-2xl text-slate-300 dark:text-slate-600"></i>
+                <div class="font-bold text-slate-600 dark:text-slate-300">
+                  ${currentLang === 'ar' ? 'لا توجد بيانات مبيعات حالية' : 'No sales records yet'}
+                </div>
+                <div class="text-xs text-slate-400">
+                  ${currentLang === 'ar' ? 'سوف تظهر المنتجات الأكثر مبيعاً تلقائياً بمجرد إتمام عمليات البيع من نقطة البيع (POS)' : 'Top performing products will appear dynamically once sales are made in POS'}
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
 
-      tbody.innerHTML = items.map((p, idx) => `
+      tbody.innerHTML = topProducts.map((p, idx) => `
         <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition">
           <td class="p-3 font-mono font-bold text-slate-400">${idx + 1}</td>
           <td class="p-3 font-bold text-slate-900 dark:text-white">${p.name}</td>
-          <td class="p-3 text-slate-600 dark:text-slate-300 font-semibold">${p.qty || 15}</td>
+          <td class="p-3 text-slate-600 dark:text-slate-300 font-semibold">${p.qty || 0}</td>
           <td class="p-3 font-bold text-slate-900 dark:text-white">${formatMoney(p.revenue)}</td>
           <td class="p-3 font-bold text-emerald-600 dark:text-emerald-400">+${formatMoney(p.profit)}</td>
           <td class="p-3">
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-              ${p.margin ? `${p.margin}%` : '65%'}
+              ${p.margin ? `${p.margin}%` : '0%'}
             </span>
           </td>
         </tr>
@@ -3098,9 +3188,14 @@
       const container = document.getElementById('lowStockList');
       if (!container) return;
 
-      const lowItems = products.filter(p => p.quantity <= 30);
+      if (!products.length) {
+        container.innerHTML = `<div class="p-4 text-center text-xs text-slate-500 dark:text-slate-400 font-semibold bg-slate-50 dark:bg-slate-800/40 rounded-xl">${currentLang === 'ar' ? 'لا توجد تنبيهات (المخزن فارغ حالياً)' : 'No alerts (Inventory empty)'}</div>`;
+        return;
+      }
+
+      const lowItems = products.filter(p => Number(p.quantity) <= 30 && Number(p.quantity) >= 0);
       if (!lowItems.length) {
-        container.innerHTML = `<div class="p-4 text-center text-xs text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/30 rounded-xl">✓ جميع المنتجات بمستويات مخزون آمنة</div>`;
+        container.innerHTML = `<div class="p-4 text-center text-xs text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/30 rounded-xl flex items-center justify-center gap-1.5"><i class="fa-solid fa-circle-check"></i> ${currentLang === 'ar' ? 'جميع المنتجات بمستويات مخزون آمنة وممتازة' : 'All products have optimal stock levels'}</div>`;
         return;
       }
 

@@ -10,6 +10,13 @@ const userSchema = new mongoose.Schema(
       trim: true,
       maxlength: [100, 'Name cannot exceed 100 characters'],
     },
+    username: {
+      type: String,
+      required: [true, 'Username is required'],
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
     email: {
       type: String,
       required: [true, 'Email is required'],
@@ -32,6 +39,26 @@ const userSchema = new mongoose.Schema(
       },
       default: 'employee',
     },
+    phone: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    address: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    branch: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    avatar: {
+      type: String,
+      default: 'AD',
+      trim: true,
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -46,6 +73,7 @@ const userSchema = new mongoose.Schema(
 
 // ─── Indexes ───────────────────────────────────────────────────────
 userSchema.index({ email: 1 });
+userSchema.index({ username: 1 });
 userSchema.index({ role: 1, isActive: 1 });
 
 // ─── Pre-save: Hash password ──────────────────────────────────────
