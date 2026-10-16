@@ -2,7 +2,8 @@
 <html lang="ar" dir="rtl" class="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0B0F19">
   <title>نظام إدارة مخزون الملابس | Apparel Inventory System</title>
   
   <!-- Tailwind CSS -->
@@ -17,17 +18,25 @@
               50: '#eef2ff',
               100: '#e0e7ff',
               200: '#c7d2fe',
-              500: '#6366f1',
+              400: '#818cf8',
+              500: '#6366F1',
               600: '#4f46e5',
               700: '#4338ca',
               900: '#1e1b4b',
             },
+            exec: '#0B0F19',
+            canvas: '#F8FAFC',
+            profit: '#10B981',
             dark: {
-              bg: '#0f172a',
-              card: '#1e293b',
-              border: '#334155',
+              bg: '#0B0F19',
+              card: 'rgba(17, 24, 39, 0.72)',
+              border: 'rgba(148, 163, 184, 0.16)',
               subtle: '#475569'
             }
+          },
+          boxShadow: {
+            glow: '0 0 24px rgba(99, 102, 241, 0.35)',
+            'glow-emerald': '0 0 22px rgba(16, 185, 129, 0.35)'
           }
         }
       }
@@ -41,86 +50,194 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
     
     :root {
-      --font-arabic: 'Cairo', sans-serif;
+      --font-arabic: 'Tajawal', 'Cairo', sans-serif;
       --font-english: 'Inter', sans-serif;
+      --exec: #0B0F19;
+      --canvas: #F8FAFC;
+      --brand: #6366F1;
+      --profit: #10B981;
     }
+
+    html { scroll-behavior: smooth; }
 
     body {
       font-family: var(--font-arabic);
-      transition: background-color 0.3s ease, color 0.3s ease;
+      transition: background-color 0.35s ease, color 0.35s ease;
+      background-image:
+        radial-gradient(1200px 500px at 10% -10%, rgba(99,102,241,0.12), transparent 55%),
+        radial-gradient(900px 400px at 100% 0%, rgba(16,185,129,0.08), transparent 50%);
     }
 
-    body.lang-en {
-      font-family: var(--font-english);
+    body.lang-en { font-family: var(--font-english); }
+
+    .glass-card, .glass-panel {
+      background: rgba(248, 250, 252, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255,255,255,0.65);
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
+    }
+    .dark .glass-card, .dark .glass-panel {
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.06);
     }
 
-    /* Glassmorphism */
-    .glass-card {
+    .login-card {
+      background: rgba(248, 250, 252, 0.94);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.45), 0 0 0 1px rgba(99,102,241,0.18), inset 0 1px 0 rgba(255,255,255,0.8);
+      backdrop-filter: blur(22px) saturate(160%);
+      -webkit-backdrop-filter: blur(22px) saturate(160%);
+    }
+    .dark .login-card {
+      background: rgba(18, 24, 40, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.55), 0 0 40px rgba(99,102,241,0.18), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+
+    .glass-header {
+      background: rgba(248, 250, 252, 0.78);
+      border-bottom: 1px solid rgba(148,163,184,0.18);
+      backdrop-filter: blur(22px) saturate(180%);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+    }
+    .dark .glass-header {
+      background: rgba(11, 15, 25, 0.78);
+      border-bottom-color: rgba(148,163,184,0.12);
+    }
+
+    .icon-btn {
+      width: 40px; height: 40px; min-width: 40px; min-height: 40px;
+      border-radius: 999px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.55);
+      border: 1px solid rgba(255,255,255,0.7);
+      box-shadow: 0 4px 14px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.8);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
+      color: #334155;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+    .dark .icon-btn {
+      background: rgba(30, 41, 59, 0.55);
+      border-color: rgba(148,163,184,0.22);
+      color: #e2e8f0;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    .icon-btn:hover { transform: translateY(-1px) scale(1.04); box-shadow: 0 8px 20px rgba(99,102,241,0.22); }
+    .icon-btn:active { transform: scale(0.92); }
+
+    .btn-press { transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease; }
+    .btn-press:hover { transform: translateY(-1px); }
+    .btn-press:active { transform: scale(0.96); }
+
+    .lift-card { transition: transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s ease; }
+    .lift-card:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(15,23,42,0.12); }
+    .dark .lift-card:hover { box-shadow: 0 18px 40px rgba(0,0,0,0.35); }
+
+    .badge-glow {
+      box-shadow: 0 0 0 1px rgba(99,102,241,0.25), 0 0 14px rgba(99,102,241,0.28);
+    }
+    .badge-glow-emerald {
+      box-shadow: 0 0 0 1px rgba(16,185,129,0.28), 0 0 14px rgba(16,185,129,0.25);
     }
 
-    /* Smooth animated transitions */
-    .fade-in { animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-    .slide-down { animation: slideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+    .kpi-icon {
+      width: 42px; height: 42px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(180deg, rgba(99,102,241,0.18), rgba(99,102,241,0.06));
+      color: var(--brand);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+    }
+
+    .sparkline { width: 100%; height: 38px; margin-top: 10px; display: block; }
+
+    .bnav-item {
+      position: relative;
+      color: #94a3b8;
+      transition: color 0.2s ease, transform 0.2s ease;
+    }
+    .bnav-item i { transition: filter 0.2s ease, transform 0.2s ease; }
+    .bnav-item.active {
+      color: #6366F1;
+      font-weight: 800;
+    }
+    .bnav-item.active i {
+      filter: drop-shadow(0 0 8px rgba(99,102,241,0.85));
+      transform: translateY(-1px);
+    }
+    .dark .bnav-item.active { color: #a5b4fc; }
+
+    .pos-step {
+      position: relative;
+      overflow: hidden;
+    }
+    .pos-step::before {
+      content: '';
+      position: absolute; inset: 0 auto auto 0; width: 100%; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(99,102,241,0.55), transparent);
+      opacity: 0.6;
+    }
+
+    .fade-in { animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+    .slide-down { animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
+      from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
     @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-16px); }
+      from { opacity: 0; transform: translateY(-18px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.35); }
+      50% { box-shadow: 0 0 0 8px rgba(99,102,241,0); }
+    }
 
-    /* Custom scrollbars */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     .dark ::-webkit-scrollbar-thumb { background: #334155; border-radius: 99px; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
 
-    /* Theme transition */
-    * {
-      transition-property: background-color, border-color;
-      transition-duration: 200ms;
-      transition-timing-function: ease-in-out;
+    @supports (padding: max(0px)) {
+      #mobileBottomNav { padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+      header.glass-header { padding-top: env(safe-area-inset-top); }
     }
   </style>
 </head>
 
-<body class="bg-slate-50 text-slate-800 dark:bg-dark-bg dark:text-slate-100 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white w-full max-w-full overflow-x-hidden">
+<body class="bg-canvas text-slate-800 dark:bg-exec dark:text-slate-100 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white w-full max-w-full overflow-x-hidden">
 
   <!-- ========================================================================= -->
   <!-- 1. LOGIN SCREEN                                                           -->
   <!-- ========================================================================= -->
-  <div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/40 backdrop-blur-md dark:bg-dark-bg overflow-y-auto">
+  <div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto" style="background: radial-gradient(900px 500px at 20% 0%, rgba(99,102,241,0.35), transparent 50%), radial-gradient(700px 400px at 90% 100%, rgba(16,185,129,0.2), transparent 50%), #0B0F19;">
     <div class="w-full max-w-md slide-down my-auto">
       
       <!-- Card -->
-      <div class="bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+      <div class="login-card rounded-3xl p-6 sm:p-8 relative overflow-hidden">
         
         <!-- Header controls inside login: Lang & Theme switcher -->
         <div class="flex justify-between items-center mb-6">
           <div class="flex items-center gap-2">
-            <!-- Theme Toggle -->
-            <button onclick="toggleTheme()" class="w-9 h-9 rounded-xl flex items-center justify-center border border-slate-200 dark:border-dark-border bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-amber-400 hover:scale-105 transition" title="Toggle Theme">
+            <button onclick="toggleTheme()" class="icon-btn" title="Toggle Theme">
               <i id="loginThemeIcon" class="fa-solid fa-moon"></i>
             </button>
-            <!-- Language Toggle -->
-            <button onclick="toggleLanguage()" class="px-3 h-9 rounded-xl text-xs font-bold border border-slate-200 dark:border-dark-border bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:scale-105 transition flex items-center gap-1.5">
-              <i class="fa-solid fa-globe text-brand-500"></i>
+            <button onclick="toggleLanguage()" class="icon-btn text-[11px] font-black" title="Language">
               <span id="loginLangLabel">EN</span>
             </button>
           </div>
-          <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-brand-50 text-brand-600 dark:bg-brand-900/50 dark:text-brand-200 border border-brand-200 dark:border-brand-800 font-bold">RBAC v2.4</span>
+          <span class="text-[11px] font-mono px-2.5 py-1 rounded-full bg-brand-500/15 text-brand-400 border border-brand-400/30 font-bold badge-glow">RBAC v2.4</span>
         </div>
 
         <!-- Logo & Title -->
         <div class="text-center mb-6">
-          <div class="w-16 h-16 bg-brand-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-brand-500/30 text-2xl">
+          <div class="w-16 h-16 bg-brand-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-glow text-2xl">
             <i class="fa-solid fa-shirt"></i>
           </div>
           <h2 id="t-loginTitle" class="text-2xl font-black text-slate-900 dark:text-white">نظام إدارة مخزون الملابس</h2>
@@ -155,7 +272,7 @@
 
           <!-- Submit Button -->
           <button type="submit" id="loginBtn"
-            class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl text-xs sm:text-sm shadow-lg shadow-brand-500/25 hover:shadow-brand-500/40 transition flex items-center justify-center gap-2">
+            class="btn-press w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl text-xs sm:text-sm shadow-glow flex items-center justify-center gap-2">
             <i class="fa-solid fa-right-to-bracket"></i>
             <span id="t-btnSignIn">تسجيل الدخول</span>
           </button>
@@ -170,62 +287,49 @@
   <div id="appScreen" class="min-h-screen flex flex-col hidden w-full max-w-full overflow-x-hidden">
 
     <!-- Top Navigation Bar -->
-    <header class="bg-white/95 dark:bg-dark-card/95 backdrop-blur-md border-b border-slate-200 dark:border-dark-border sticky top-0 z-40 w-full">
-      <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex justify-between items-center gap-2 sm:gap-4">
+    <header class="glass-header sticky top-0 z-40 w-full">
+      <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex justify-between items-center gap-2">
         
         <!-- Left: Hamburger (Mobile) + Brand -->
-        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-          <!-- Mobile Menu Trigger -->
-          <button onclick="toggleMobileDrawer()" class="md:hidden w-9 h-9 rounded-xl flex items-center justify-center border border-slate-200 dark:border-dark-border text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition active:scale-95">
+        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+          <button onclick="toggleMobileDrawer()" class="icon-btn md:hidden" title="Menu">
             <i class="fa-solid fa-bars text-sm"></i>
           </button>
 
-          <!-- Brand Logo -->
-          <div class="flex items-center gap-2">
-            <div class="w-8 h-8 sm:w-9 sm:h-9 bg-brand-600 text-white rounded-xl flex items-center justify-center text-sm sm:text-base shadow-md shadow-brand-500/20 shrink-0">
+          <div class="flex items-center gap-2 min-w-0">
+            <div class="w-9 h-9 bg-brand-600 text-white rounded-full flex items-center justify-center text-sm shadow-glow shrink-0">
               <i class="fa-solid fa-shirt"></i>
             </div>
-            <div>
-              <h1 id="t-appBrand" class="text-xs sm:text-sm font-black leading-tight tracking-tight text-slate-900 dark:text-white truncate">نظام مخزون الملابس</h1>
+            <div class="min-w-0 hidden xs:block sm:block">
+              <h1 id="t-appBrand" class="text-xs sm:text-sm font-black leading-tight tracking-tight text-slate-900 dark:text-white truncate max-w-[42vw] sm:max-w-none">نظام مخزون الملابس</h1>
               <p class="text-[9px] sm:text-[10px] text-slate-400 font-mono hidden sm:block">Apparel Inventory Pro</p>
             </div>
           </div>
         </div>
 
-        <!-- Right: Action Controls (Theme, Lang, User Badge, Logout) -->
-        <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
-
-          <!-- Language Selector -->
-          <button onclick="toggleLanguage()" id="btnLangToggle"
-            class="px-2 sm:px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-dark-border bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-[11px] sm:text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1 shadow-sm"
-            title="Switch Language">
-            <i class="fa-solid fa-globe text-brand-500 text-xs"></i>
-            <span id="navLangLabel">English</span>
+        <!-- Right: circular glass icon buttons — never clipped on iPhone -->
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <button onclick="toggleLanguage()" id="btnLangToggle" class="icon-btn" title="Switch Language">
+            <i class="fa-solid fa-globe text-brand-500 text-sm"></i>
+            <span id="navLangLabel" class="sr-only">English</span>
           </button>
 
-          <!-- Theme Toggle (Sun/Moon) -->
-          <button onclick="toggleTheme()" id="btnThemeToggle"
-            class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-slate-200 dark:border-dark-border bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-amber-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center justify-center shadow-sm"
-            title="Toggle Light/Dark Theme">
-            <i id="navThemeIcon" class="fa-solid fa-moon text-xs sm:text-sm"></i>
+          <button onclick="toggleTheme()" id="btnThemeToggle" class="icon-btn dark:text-amber-300" title="Toggle Light/Dark Theme">
+            <i id="navThemeIcon" class="fa-solid fa-moon text-sm"></i>
           </button>
 
-          <!-- User Role & Name Pill -->
-          <div id="navUserPill" onclick="openAdminProfileModal()" class="flex items-center gap-1.5 sm:gap-2 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-dark-border rounded-xl px-2 sm:px-2.5 py-1 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="تعديل حسابي وكلمة المرور">
-            <div id="navUserAvatar" class="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-amber-500 text-slate-950 font-black text-[10px] sm:text-[11px] flex items-center justify-center shrink-0">A</div>
-            <div class="hidden sm:block text-right rtl:text-right ltr:text-left">
-              <div id="navUserName" class="text-xs font-bold leading-none text-slate-800 dark:text-slate-200 truncate max-w-[120px]">المدير العام</div>
-              <div id="navUserRoleBadge" class="text-[9px] text-amber-600 dark:text-amber-400 font-bold uppercase mt-0.5">ADMIN</div>
-            </div>
+          <button type="button" id="navUserPill" onclick="openAdminProfileModal()" class="icon-btn p-0 overflow-hidden" title="تعديل حسابي وكلمة المرور">
+            <div id="navUserAvatar" class="w-full h-full rounded-full bg-amber-500 text-slate-950 font-black text-[11px] flex items-center justify-center">A</div>
+          </button>
+          <div class="hidden md:block text-right rtl:text-right ltr:text-left pe-1">
+            <div id="navUserName" class="text-xs font-bold leading-none text-slate-800 dark:text-slate-200 truncate max-w-[120px]">المدير العام</div>
+            <div id="navUserRoleBadge" class="text-[9px] text-amber-500 font-bold uppercase mt-0.5">ADMIN</div>
           </div>
 
-          <!-- Logout Button -->
-          <button onclick="handleLogout()" id="t-btnLogout"
-            class="bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm">
-            <i class="fa-solid fa-right-from-bracket text-xs"></i>
-            <span class="hidden sm:inline" id="t-logoutText">خروج</span>
+          <button onclick="handleLogout()" id="t-btnLogout" class="icon-btn text-rose-500" title="خروج">
+            <i class="fa-solid fa-right-from-bracket text-sm"></i>
+            <span class="sr-only" id="t-logoutText">خروج</span>
           </button>
-
         </div>
       </div>
     </header>
@@ -234,7 +338,7 @@
     <div id="mobileDrawerOverlay" onclick="toggleMobileDrawer()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden md:hidden transition-opacity"></div>
     
     <!-- Mobile Drawer Menu -->
-    <aside id="mobileDrawer" class="fixed top-0 bottom-0 rtl:right-0 ltr:left-0 w-80 max-w-[85vw] bg-white dark:bg-dark-card border-r dark:border-dark-border z-50 transform rtl:translate-x-full ltr:-translate-x-full md:hidden transition-transform duration-300 ease-in-out flex flex-col p-4 sm:p-5 shadow-2xl">
+    <aside id="mobileDrawer" class="fixed top-0 bottom-0 rtl:right-0 ltr:left-0 w-80 max-w-[85vw] glass-panel z-50 transform rtl:translate-x-full ltr:-translate-x-full md:hidden transition-transform duration-300 ease-in-out flex flex-col p-4 sm:p-5">
       <div class="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-dark-border">
         <div class="flex items-center gap-2">
           <div class="w-8 h-8 bg-brand-600 text-white rounded-xl flex items-center justify-center text-sm shadow-md shadow-brand-500/20">
@@ -280,15 +384,15 @@
     </aside>
 
     <!-- App Body Container with Desktop Navigation -->
-    <main class="max-w-7xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 pb-24 md:pb-6 w-full flex-1 flex flex-col gap-4 sm:gap-6">
+    <main class="max-w-7xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 pb-28 md:pb-6 w-full flex-1 flex flex-col gap-4 sm:gap-6">
 
       <!-- Navigation Tabs (Desktop & Tablet) - Strictly Rendered Dynamically via renderDesktopNav() -->
-      <nav id="desktopNavTabs" class="hidden md:flex items-center gap-1.5 bg-white dark:bg-dark-card p-1.5 rounded-2xl border border-slate-200 dark:border-dark-border shadow-sm overflow-x-auto">
+      <nav id="desktopNavTabs" class="hidden md:flex items-center gap-1.5 glass-card p-1.5 rounded-2xl overflow-x-auto">
         <!-- Rendered dynamically by renderDesktopNav() according to user.role -->
       </nav>
 
       <!-- RBAC Security Banner -->
-      <div id="rbacBanner" class="p-4 rounded-2xl border flex items-center justify-between gap-4 fade-in bg-white dark:bg-dark-card border-slate-200 dark:border-dark-border shadow-sm">
+      <div id="rbacBanner" class="p-4 rounded-2xl flex items-center justify-between gap-4 fade-in glass-card">
         <div class="flex items-center gap-3">
           <div id="rbacBannerIcon" class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg">
             <i class="fa-solid fa-shield-halved"></i>
@@ -328,27 +432,37 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
             
             <!-- Metric 1: Total Revenue -->
-            <div class="bg-white dark:bg-dark-card p-5 rounded-2xl border border-slate-200 dark:border-dark-border shadow-sm flex flex-col justify-between">
+            <div class="glass-card lift-card p-5 rounded-2xl flex flex-col justify-between">
               <div class="flex justify-between items-start">
                 <span id="t-kpiRevenue" class="text-xs font-bold text-slate-500 dark:text-slate-400">إجمالي المبيعات (Revenue)</span>
-                <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-sm">
+                <div class="kpi-icon text-brand-500">
                   <i class="fa-solid fa-sack-dollar"></i>
                 </div>
               </div>
               <div class="mt-3">
                 <h3 id="kpiRevenueVal" class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">$0.00</h3>
                 <div class="flex items-center gap-1.5 text-[11px] text-slate-400 font-semibold mt-1">
-                  <i class="fa-solid fa-chart-simple"></i>
+                  <i class="fa-solid fa-chart-simple text-brand-400"></i>
                   <span>0% <span id="t-kpiCompare" class="text-slate-400 font-normal">مقارنة بالشهر السابق</span></span>
                 </div>
+                <svg class="sparkline" viewBox="0 0 120 36" preserveAspectRatio="none" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="sparkRevFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#6366F1" stop-opacity="0.35"/>
+                      <stop offset="100%" stop-color="#6366F1" stop-opacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <polyline id="sparkRevenueFill" fill="url(#sparkRevFill)" stroke="none" points="0,36 120,36"></polyline>
+                  <polyline id="sparkRevenueLine" fill="none" stroke="#6366F1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="0,28 120,18"></polyline>
+                </svg>
               </div>
             </div>
 
             <!-- Metric 2: Total COGS -->
-            <div class="bg-white dark:bg-dark-card p-5 rounded-2xl border border-slate-200 dark:border-dark-border shadow-sm flex flex-col justify-between">
+            <div class="glass-card lift-card p-5 rounded-2xl flex flex-col justify-between">
               <div class="flex justify-between items-start">
                 <span id="t-kpiCogs" class="text-xs font-bold text-slate-500 dark:text-slate-400">تكلفة البضاعة المباعة (COGS)</span>
-                <div class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm">
+                <div class="kpi-icon" style="background:linear-gradient(180deg, rgba(245,158,11,0.2), rgba(245,158,11,0.06)); color:#f59e0b;">
                   <i class="fa-solid fa-receipt"></i>
                 </div>
               </div>
@@ -357,39 +471,48 @@
                 <div class="text-[11px] text-slate-400 font-normal mt-1">
                   <span id="t-cogsDesc">إجمالي أسعار الجملة للقطع المباعة</span>
                 </div>
+                <svg class="sparkline" viewBox="0 0 120 36" preserveAspectRatio="none" aria-hidden="true">
+                  <polyline id="sparkCogsLine" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="0,22 120,26"></polyline>
+                </svg>
               </div>
             </div>
 
             <!-- Metric 3: Net Profit & Margin -->
-            <div class="bg-white dark:bg-dark-card p-5 rounded-2xl border border-slate-200 dark:border-dark-border shadow-sm flex flex-col justify-between">
+            <div class="glass-card lift-card p-5 rounded-2xl flex flex-col justify-between">
               <div class="flex justify-between items-start">
                 <span id="t-kpiProfit" class="text-xs font-bold text-slate-500 dark:text-slate-400">صافي الربح الفعلي (Net Profit)</span>
-                <div class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm">
+                <div class="kpi-icon" style="background:linear-gradient(180deg, rgba(16,185,129,0.22), rgba(16,185,129,0.06)); color:#10B981;">
                   <i class="fa-solid fa-chart-line"></i>
                 </div>
               </div>
               <div class="mt-3">
-                <h3 id="kpiProfitVal" class="text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">$0.00</h3>
-                <div class="flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-1">
-                  <span id="kpiMarginVal" class="bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">0.0% Margin</span>
+                <h3 id="kpiProfitVal" class="text-2xl font-black text-profit tracking-tight">$0.00</h3>
+                <div class="flex items-center gap-1.5 text-[11px] text-profit font-bold mt-1">
+                  <span id="kpiMarginVal" class="bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-400/30 badge-glow-emerald">0.0% Margin</span>
                 </div>
+                <svg class="sparkline" viewBox="0 0 120 36" preserveAspectRatio="none" aria-hidden="true">
+                  <polyline id="sparkProfitLine" fill="none" stroke="#10B981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="0,30 120,12"></polyline>
+                </svg>
               </div>
             </div>
 
             <!-- Metric 4: Stock & Alerts -->
-            <div class="bg-white dark:bg-dark-card p-5 rounded-2xl border border-slate-200 dark:border-dark-border shadow-sm flex flex-col justify-between">
+            <div class="glass-card lift-card p-5 rounded-2xl flex flex-col justify-between">
               <div class="flex justify-between items-start">
                 <span id="t-kpiStock" class="text-xs font-bold text-slate-500 dark:text-slate-400">المخزون وحالات النقص</span>
-                <div class="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 flex items-center justify-center text-sm">
+                <div class="kpi-icon" style="background:linear-gradient(180deg, rgba(20,184,166,0.2), rgba(20,184,166,0.06)); color:#14b8a6;">
                   <i class="fa-solid fa-boxes-packing"></i>
                 </div>
               </div>
               <div class="mt-3">
                 <h3 id="kpiStockVal" class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">0 <span class="text-xs font-normal text-slate-400">قطعة</span></h3>
-                <div class="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+                <div class="flex items-center gap-1 text-[11px] text-profit font-bold mt-1">
                   <i class="fa-solid fa-circle-check"></i>
                   <span id="kpiLowStockVal">المخزون بوضع ممتاز</span>
                 </div>
+                <svg class="sparkline" viewBox="0 0 120 36" preserveAspectRatio="none" aria-hidden="true">
+                  <polyline id="sparkStockLine" fill="none" stroke="#14b8a6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="0,16 120,20"></polyline>
+                </svg>
               </div>
             </div>
 
@@ -399,7 +522,7 @@
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             <!-- Chart 1: Revenue vs Profit Trends (2 cols on large screen) -->
-            <div class="lg:col-span-2 bg-white dark:bg-dark-card p-5 rounded-3xl border border-slate-200 dark:border-dark-border shadow-sm flex flex-col">
+            <div class="lg:col-span-2 glass-card p-5 rounded-3xl flex flex-col">
               <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
                 <div>
                   <h4 id="t-chartTrendsTitle" class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
@@ -424,7 +547,7 @@
             </div>
 
             <!-- Chart 2: Category Breakdown (Donut Chart) -->
-            <div class="bg-white dark:bg-dark-card p-5 rounded-3xl border border-slate-200 dark:border-dark-border shadow-sm flex flex-col justify-between">
+            <div class="glass-card p-5 rounded-3xl flex flex-col justify-between">
               <div>
                 <h4 id="t-chartCategoryTitle" class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
                   <i class="fa-solid fa-chart-pie text-emerald-500"></i>
@@ -449,7 +572,7 @@
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             <!-- Top 5 Profitable Products Table (2 cols) -->
-            <div class="lg:col-span-2 bg-white dark:bg-dark-card p-5 rounded-3xl border border-slate-200 dark:border-dark-border shadow-sm">
+            <div class="lg:col-span-2 glass-card p-5 rounded-3xl">
               <div class="flex justify-between items-center mb-4">
                 <h4 id="t-topProductsTitle" class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
                   <i class="fa-solid fa-trophy text-amber-500"></i>
@@ -478,7 +601,7 @@
             </div>
 
             <!-- Low Stock / Reorder Warning Widget (1 col) -->
-            <div class="bg-white dark:bg-dark-card p-5 rounded-3xl border border-slate-200 dark:border-dark-border shadow-sm flex flex-col">
+            <div class="glass-card p-5 rounded-3xl flex flex-col">
               <div class="flex justify-between items-center mb-3">
                 <h4 id="t-reorderTitle" class="text-sm font-black text-rose-600 dark:text-rose-400 flex items-center gap-2">
                   <i class="fa-solid fa-triangle-exclamation"></i>
@@ -505,7 +628,7 @@
       <div id="tabContent-inventory" class="fade-in space-y-4">
         
         <!-- Controls: Search + Add Product -->
-        <div class="flex flex-col sm:flex-row justify-between items-center gap-3 bg-white dark:bg-dark-card p-4 rounded-2xl border border-slate-200 dark:border-dark-border shadow-sm">
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-3 glass-card p-4 rounded-2xl">
           <div class="relative w-full sm:w-80">
             <input id="searchInput" type="text" onkeyup="filterProducts()" placeholder="ابحث باسم المنتج أو SKU..."
               class="w-full text-xs pr-9 pl-4 rtl:pr-9 rtl:pl-4 ltr:pl-9 ltr:pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-900/60 text-slate-800 dark:text-white focus:outline-none focus:border-brand-500">
@@ -514,7 +637,7 @@
 
           <div id="btnAddProductWrapper" class="flex items-center gap-2 w-full sm:w-auto">
             <button onclick="openAddModal()"
-              class="w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-2 shadow-md shadow-brand-500/20">
+              class="btn-press w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-glow">
               <i class="fa-solid fa-plus"></i>
               <span id="t-btnAddProduct">إضافة منتج جديد</span>
             </button>
@@ -522,7 +645,7 @@
         </div>
 
         <!-- Inventory Table Card (Desktop View) -->
-        <div class="hidden md:block bg-white dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border shadow-sm overflow-hidden">
+        <div class="hidden md:block glass-card rounded-2xl overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-right rtl:text-right ltr:text-left text-xs">
               <thead class="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-dark-border">
@@ -559,7 +682,7 @@
         <div class="max-w-2xl mx-auto space-y-4">
 
           <!-- POS Header Banner -->
-          <div class="bg-gradient-to-r from-brand-600 to-indigo-700 text-white rounded-3xl p-5 shadow-lg flex items-center justify-between">
+          <div class="bg-gradient-to-r from-brand-600 to-indigo-800 text-white rounded-3xl p-5 shadow-glow flex items-center justify-between">
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl">
                 <i class="fa-solid fa-cart-shopping"></i>
@@ -576,14 +699,22 @@
           </div>
 
           <!-- 3-Step POS Card -->
-          <div class="bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border rounded-3xl p-5 sm:p-7 shadow-sm">
+          <div class="glass-card rounded-3xl p-5 sm:p-7">
             <form onsubmit="handleSaleSubmit(event)" class="space-y-5">
 
+              <div class="flex items-center justify-between gap-2 text-[11px] font-black text-slate-500 dark:text-slate-400 px-1">
+                <span class="flex items-center gap-1.5 text-brand-500"><span class="w-5 h-5 rounded-full bg-brand-600 text-white flex items-center justify-center text-[10px]">1</span> المنتج</span>
+                <span class="h-px flex-1 bg-gradient-to-l from-brand-500/40 to-emerald-500/40 mx-2"></span>
+                <span class="flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center text-[10px]">2</span> الكمية</span>
+                <span class="h-px flex-1 bg-gradient-to-l from-brand-500/20 to-emerald-500/40 mx-2"></span>
+                <span class="flex items-center gap-1.5 text-profit"><span class="w-5 h-5 rounded-full bg-emerald-500/20 text-profit flex items-center justify-center text-[10px]">3</span> الدفع</span>
+              </div>
+
               <!-- STEP 1: Select Product -->
-              <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-dark-border space-y-3">
+              <div class="pos-step p-4 sm:p-5 rounded-2xl glass-panel space-y-3">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2 font-black text-slate-900 dark:text-white text-xs sm:text-sm">
-                    <span class="w-6 h-6 rounded-lg bg-brand-600 text-white text-xs flex items-center justify-center font-bold">1</span>
+                    <span class="w-7 h-7 rounded-full bg-brand-600 text-white text-xs flex items-center justify-center font-bold">1</span>
                     <span id="t-posStep1Title">اختر المنتج من المخزن:</span>
                   </div>
                   <span id="posStockBadge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
@@ -617,10 +748,10 @@
               </div>
 
               <!-- STEP 2: Set Quantity -->
-              <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-dark-border space-y-3">
+              <div class="pos-step p-4 sm:p-5 rounded-2xl glass-panel space-y-3">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2 font-black text-slate-900 dark:text-white text-xs sm:text-sm">
-                    <span class="w-6 h-6 rounded-lg bg-brand-600 text-white text-xs flex items-center justify-center font-bold">2</span>
+                    <span class="w-7 h-7 rounded-full bg-brand-600 text-white text-xs flex items-center justify-center font-bold">2</span>
                     <span id="t-posStep2Title">تحديد الكمية المباعة:</span>
                   </div>
                   <span id="posUnitPriceCalc" class="text-xs text-slate-500 font-bold">$0.00 للقطعة</span>
@@ -629,13 +760,13 @@
                 <!-- Touch Friendly Quantity Stepper -->
                 <div class="flex items-center justify-center gap-3 py-2">
                   <button type="button" onclick="adjustPosQty(-1)"
-                    class="w-14 h-14 rounded-2xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-90 text-2xl font-black flex items-center justify-center shadow-sm transition" title="انقاص قطعة">
+                    class="icon-btn !w-16 !h-16 !min-w-16 !min-h-16 !rounded-2xl text-2xl" title="انقاص قطعة">
                     <i class="fa-solid fa-minus text-base"></i>
                   </button>
                   <input type="number" id="posQuantity" min="1" value="1" oninput="calcPosTotal()"
-                    class="w-24 sm:w-32 h-14 text-center font-black text-2xl sm:text-3xl rounded-2xl border border-brand-300 dark:border-brand-800 bg-white dark:bg-dark-card text-brand-600 dark:text-brand-400 focus:outline-none shadow-sm" required>
+                    class="w-24 sm:w-32 h-16 text-center font-black text-2xl sm:text-3xl rounded-2xl border border-brand-400/40 bg-white/70 dark:bg-slate-900/70 text-brand-600 dark:text-brand-400 focus:outline-none shadow-glow" required>
                   <button type="button" onclick="adjustPosQty(1)"
-                    class="w-14 h-14 rounded-2xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-90 text-2xl font-black flex items-center justify-center shadow-sm transition" title="زيادة قطعة">
+                    class="icon-btn !w-16 !h-16 !min-w-16 !min-h-16 !rounded-2xl text-2xl" title="زيادة قطعة">
                     <i class="fa-solid fa-plus text-base"></i>
                   </button>
                 </div>
@@ -651,7 +782,7 @@
               </div>
 
               <!-- STEP 3: Checkout -->
-              <div class="p-4 sm:p-5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60 space-y-3">
+              <div class="pos-step p-4 sm:p-5 rounded-2xl bg-emerald-500/10 border border-emerald-400/30 space-y-3">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2 font-black text-slate-900 dark:text-white text-xs sm:text-sm">
                     <span class="w-6 h-6 rounded-lg bg-emerald-600 text-white text-xs flex items-center justify-center font-bold">3</span>
@@ -666,7 +797,7 @@
                 </div>
 
                 <button type="submit" id="btnPosSubmit"
-                  class="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs sm:text-sm rounded-2xl transition shadow-xl shadow-emerald-600/25 flex items-center justify-center gap-2.5 active:scale-95">
+                  class="btn-press w-full h-16 bg-profit hover:bg-emerald-600 text-white font-black text-xs sm:text-sm rounded-2xl shadow-glow-emerald flex items-center justify-center gap-2.5">
                   <i class="fa-solid fa-circle-check text-base sm:text-lg"></i>
                   <span id="t-posBtnConfirm">إتمام البيع الآن وإصدار الفاتورة</span>
                 </button>
@@ -681,7 +812,7 @@
       <!-- TAB 4: RETURNS MANAGEMENT                                             -->
       <!-- ===================================================================== -->
       <div id="tabContent-returns" class="fade-in hidden">
-        <div class="max-w-xl mx-auto bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border rounded-3xl p-6 shadow-sm">
+        <div class="max-w-xl mx-auto glass-card rounded-3xl p-6">
           <div class="flex items-center gap-3 mb-5 pb-4 border-b border-slate-100 dark:border-dark-border">
             <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg">
               <i class="fa-solid fa-rotate-left"></i>
@@ -712,7 +843,7 @@
             </div>
 
             <button type="submit"
-              class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 rounded-xl text-xs sm:text-sm transition shadow-lg shadow-amber-600/20 flex items-center justify-center gap-2">
+              class="btn-press w-full h-14 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-2xl text-xs sm:text-sm shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2">
               <i class="fa-solid fa-arrow-rotate-left"></i>
               <span id="t-returnBtnConfirm">تأكيد المرتجع وإعادة الإيداع</span>
             </button>
@@ -724,7 +855,7 @@
       <!-- TAB 5: TRANSACTION AUDIT HISTORY                                     -->
       <!-- ===================================================================== -->
       <div id="tabContent-history" class="fade-in hidden space-y-4">
-        <div class="flex justify-between items-center bg-white dark:bg-dark-card p-4 rounded-2xl border border-slate-200 dark:border-dark-border shadow-sm">
+        <div class="flex justify-between items-center glass-card p-4 rounded-2xl">
           <div>
             <h3 id="t-historyTitle" class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
               <i class="fa-solid fa-clock-rotate-left text-brand-500"></i>
@@ -732,7 +863,9 @@
             </h3>
             <p id="t-historySubtitle" class="text-xs text-slate-400 mt-0.5">تتبع عمليات البيع والمرتجعات والموظف المنفذ</p>
           </div>
-          <button onclick="loadHistory()" class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 transition flex items-center gap-1.5">
+          <button onclick="loadHistory()" class="icon-btn" title="Refresh">
+            <i class="fa-solid fa-arrows-rotate text-sm"></i>
+          </button>
         </div>
 
         <div id="historyList" class="space-y-2.5">
@@ -746,7 +879,7 @@
       <div id="tabContent-employees" class="fade-in hidden space-y-4">
         
         <!-- Controls: Header + Search/Filter + Add Employee Button -->
-        <div class="bg-white dark:bg-dark-card p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-dark-border shadow-sm space-y-4">
+        <div class="glass-card p-4 sm:p-5 rounded-2xl space-y-4">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
               <h3 id="t-empPanelTitle" class="text-sm sm:text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
@@ -758,7 +891,7 @@
 
             <div class="flex items-center gap-2 w-full sm:w-auto shrink-0 flex-wrap">
               <button onclick="openAddEmployeeModal()" id="t-btnAddEmployee"
-                class="flex-1 sm:flex-initial bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-2 shadow-md shadow-brand-500/20">
+                class="btn-press flex-1 sm:flex-initial bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-glow">
                 <i class="fa-solid fa-user-plus"></i>
                 <span>إضافة موظف جديد</span>
               </button>
@@ -797,7 +930,7 @@
         </div>
 
         <!-- Employee Directory Table (Desktop View) -->
-        <div class="hidden md:block bg-white dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border shadow-sm overflow-hidden">
+        <div class="hidden md:block glass-card rounded-2xl overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-right rtl:text-right ltr:text-left text-xs">
               <thead class="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-dark-border">
@@ -828,20 +961,20 @@
       </div>
 
       <!-- Fixed Mobile Bottom Navigation Bar (iPhone & Mobile Touch Optimized) -->
-      <nav id="mobileBottomNav" class="fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-dark-card/95 backdrop-blur-md border-t border-slate-200 dark:border-dark-border py-1.5 px-3 flex justify-around items-center md:hidden shadow-[0_-4px_25px_rgba(0,0,0,0.08)]">
-        <button onclick="switchTab('inventory')" id="bottomNav-inventory" class="flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400 hover:text-brand-600 transition active:scale-95">
+      <nav id="mobileBottomNav" class="fixed bottom-0 inset-x-0 z-40 glass-header py-1.5 px-2 flex justify-around items-center md:hidden">
+        <button onclick="switchTab('inventory')" id="bottomNav-inventory" class="bnav-item flex flex-col items-center justify-center flex-1 py-1 active:scale-95">
           <i class="fa-solid fa-box-archive text-lg"></i>
           <span class="text-[10px] font-bold mt-1" id="t-bnavInventory">المنتجات</span>
         </button>
-        <button onclick="switchTab('pos')" id="bottomNav-pos" class="flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400 hover:text-brand-600 transition active:scale-95">
+        <button onclick="switchTab('pos')" id="bottomNav-pos" class="bnav-item flex flex-col items-center justify-center flex-1 py-1 active:scale-95">
           <i class="fa-solid fa-cart-shopping text-lg"></i>
           <span class="text-[10px] font-bold mt-1" id="t-bnavPos">البيع POS</span>
         </button>
-        <button onclick="switchTab('returns')" id="bottomNav-returns" class="flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400 hover:text-brand-600 transition active:scale-95">
+        <button onclick="switchTab('returns')" id="bottomNav-returns" class="bnav-item flex flex-col items-center justify-center flex-1 py-1 active:scale-95">
           <i class="fa-solid fa-rotate-left text-lg"></i>
           <span class="text-[10px] font-bold mt-1" id="t-bnavReturns">المرتجعات</span>
         </button>
-        <button onclick="toggleMobileDrawer()" id="bottomNav-menu" class="flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400 hover:text-brand-600 transition active:scale-95">
+        <button onclick="toggleMobileDrawer()" id="bottomNav-menu" class="bnav-item flex flex-col items-center justify-center flex-1 py-1 active:scale-95">
           <i class="fa-solid fa-bars text-lg"></i>
           <span class="text-[10px] font-bold mt-1" id="t-bnavMenu">القائمة</span>
         </button>
@@ -854,7 +987,7 @@
   <!-- 2.5 ADD EMPLOYEE MODAL (Full fields: Name, Email, Phone, Address, Branch...) -->
   <!-- ========================================================================= -->
   <div id="addEmployeeModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-    <div class="bg-white dark:bg-dark-card rounded-3xl border border-slate-200 dark:border-dark-border w-full max-w-lg p-5 sm:p-6 shadow-2xl slide-down my-auto max-h-[90vh] overflow-y-auto">
+    <div class="glass-card rounded-3xl w-full max-w-lg p-5 sm:p-6 slide-down my-auto max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-dark-border mb-4">
         <h3 id="t-modalAddEmpTitle" class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
           <i class="fa-solid fa-user-plus text-brand-600"></i>
@@ -952,7 +1085,7 @@
   <!-- 2.6 EMPLOYEE DETAILS MODAL (Full profile view + Quick actions)            -->
   <!-- ========================================================================= -->
   <div id="employeeDetailsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto" onclick="if(event.target === this) closeEmployeeDetailsModal()">
-    <div class="bg-white dark:bg-dark-card rounded-3xl border border-slate-200 dark:border-dark-border w-full max-w-lg p-5 sm:p-6 shadow-2xl slide-down my-auto max-h-[90vh] overflow-y-auto">
+    <div class="glass-card rounded-3xl w-full max-w-lg p-5 sm:p-6 slide-down my-auto max-h-[90vh] overflow-y-auto">
       
       <!-- Modal Header -->
       <div class="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-dark-border mb-4">
@@ -1076,7 +1209,7 @@
   <!-- 2.7 EDIT EMPLOYEE MODAL (Full profile editor)                             -->
   <!-- ========================================================================= -->
   <div id="editEmployeeModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto" onclick="if(event.target === this) closeEditEmployeeModal()">
-    <div class="bg-white dark:bg-dark-card rounded-3xl border border-slate-200 dark:border-dark-border w-full max-w-lg p-5 sm:p-6 shadow-2xl slide-down my-auto max-h-[90vh] overflow-y-auto">
+    <div class="glass-card rounded-3xl w-full max-w-lg p-5 sm:p-6 slide-down my-auto max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-dark-border mb-4">
         <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
           <i class="fa-solid fa-user-pen text-brand-600"></i>
@@ -1179,7 +1312,7 @@
   <!-- 3. ADD PRODUCT MODAL DIALOG                                              -->
   <!-- ========================================================================= -->
   <div id="addModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-    <div class="bg-white dark:bg-dark-card rounded-3xl border border-slate-200 dark:border-dark-border w-full max-w-lg p-5 sm:p-6 shadow-2xl slide-down my-auto max-h-[90vh] overflow-y-auto">
+    <div class="glass-card rounded-3xl w-full max-w-lg p-5 sm:p-6 slide-down my-auto max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-dark-border mb-4">
         <h3 id="t-modalAddTitle" class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
           <i class="fa-solid fa-plus-circle text-brand-600"></i>
@@ -1249,7 +1382,7 @@
   <!-- 4. CUSTOM CONFIRMATION MODAL (Product Deletion & Archival)                -->
   <!-- ========================================================================= -->
   <div id="deleteConfirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-    <div class="bg-white dark:bg-dark-card rounded-3xl border border-slate-200 dark:border-dark-border w-full max-w-md p-6 shadow-2xl slide-down my-auto">
+    <div class="glass-card rounded-3xl w-full max-w-md p-6 slide-down my-auto">
       
       <div class="flex items-center gap-3.5 mb-4">
         <div class="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xl shrink-0 shadow-inner">
@@ -1293,7 +1426,7 @@
   <!-- 4.1 CUSTOM CONFIRMATION MODAL (Employee Account Deletion)                  -->
   <!-- ========================================================================= -->
   <div id="deleteEmployeeModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-    <div class="bg-white dark:bg-dark-card rounded-3xl border border-slate-200 dark:border-dark-border w-full max-w-md p-6 shadow-2xl slide-down my-auto">
+    <div class="glass-card rounded-3xl w-full max-w-md p-6 slide-down my-auto">
       
       <div class="flex items-center gap-3.5 mb-4">
         <div class="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xl shrink-0 shadow-inner">
@@ -1337,7 +1470,7 @@
   <!-- 2.8 ADMIN PROFILE & PASSWORD MANAGEMENT MODAL                             -->
   <!-- ========================================================================= -->
   <div id="adminProfileModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto" onclick="if(event.target === this) closeAdminProfileModal()">
-    <div class="bg-white dark:bg-dark-card rounded-3xl border border-slate-200 dark:border-dark-border w-full max-w-lg p-5 sm:p-6 shadow-2xl slide-down my-auto max-h-[90vh] overflow-y-auto">
+    <div class="glass-card rounded-3xl w-full max-w-lg p-5 sm:p-6 slide-down my-auto max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-dark-border mb-4">
         <div class="flex items-center gap-2.5">
           <div class="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 font-black text-sm flex items-center justify-center shadow-sm">
@@ -1419,7 +1552,7 @@
   <!-- 2.9 FACTORY RESET CONFIRMATION MODAL                                      -->
   <!-- ========================================================================= -->
   <div id="factoryResetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/70 backdrop-blur-md overflow-y-auto" onclick="if(event.target === this) closeFactoryResetModal()">
-    <div class="bg-white dark:bg-dark-card rounded-3xl border-2 border-rose-500/40 w-full max-w-md p-5 sm:p-6 shadow-2xl slide-down my-auto">
+    <div class="glass-card rounded-3xl border-2 border-rose-500/40 w-full max-w-md p-5 sm:p-6 slide-down my-auto">
       
       <div class="flex items-center gap-3 mb-4">
         <div class="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-2xl shrink-0">
@@ -1473,7 +1606,7 @@
   <!-- 2.10 POS SALE RECEIPT & INVOICE MODAL                                     -->
   <!-- ========================================================================= -->
   <div id="posReceiptModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto" onclick="if(event.target === this) closeReceiptModal()">
-    <div class="bg-white dark:bg-dark-card rounded-3xl border border-slate-200 dark:border-dark-border w-full max-w-sm p-5 sm:p-6 shadow-2xl slide-down my-auto text-slate-900 dark:text-white">
+    <div class="glass-card rounded-3xl w-full max-w-sm p-5 sm:p-6 slide-down my-auto text-slate-900 dark:text-white">
       
       <!-- Receipt Header -->
       <div class="text-center pb-4 border-b border-dashed border-slate-200 dark:border-dark-border">
@@ -1841,7 +1974,7 @@
       const navLangLabel = document.getElementById('navLangLabel');
       const loginLangLabel = document.getElementById('loginLangLabel');
       if (navLangLabel) navLangLabel.textContent = isAr ? 'English' : 'عربي';
-      if (loginLangLabel) loginLangLabel.textContent = isAr ? 'EN' : 'عربي';
+      if (loginLangLabel) loginLangLabel.textContent = isAr ? 'EN' : 'AR';
 
       // Apply translations to UI keys
       const t = I18N[lang];
@@ -1934,7 +2067,7 @@
 
       container.innerHTML = visibleTabs.map(tab => {
         const isActive = tab.id === currentActiveTab;
-        const activeClasses = 'tab-btn active-tab px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-brand-600 text-white shadow-md shadow-brand-500/20';
+        const activeClasses = 'tab-btn active-tab px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-brand-600 text-white shadow-glow';
         const inactiveClasses = 'tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800';
         return `
           <button onclick="switchTab('${tab.id}')" id="tabBtn-${tab.id}"
@@ -2222,15 +2355,13 @@
       }
 
       // Highlight active icon in mobile bottom navigation
-      ['inventory', 'pos', 'returns'].forEach(bId => {
+      ['inventory', 'pos', 'returns', 'menu'].forEach(bId => {
         const bBtn = document.getElementById(`bottomNav-${bId}`);
-        if (bBtn) {
-          if (tabId === bId) {
-            bBtn.className = 'flex flex-col items-center justify-center flex-1 py-1 text-brand-600 dark:text-brand-400 font-bold transition scale-105';
-          } else {
-            bBtn.className = 'flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400 hover:text-brand-600 transition';
-          }
-        }
+        if (!bBtn) return;
+        const isActive = (bId === 'menu')
+          ? (tabId === 'analytics' || tabId === 'history' || tabId === 'employees')
+          : tabId === bId;
+        bBtn.className = `bnav-item flex flex-col items-center justify-center flex-1 py-1 active:scale-95${isActive ? ' active' : ''}`;
       });
 
       // Handle Admin analytics protection
@@ -2326,7 +2457,7 @@
       if (!items.length) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="8" class="p-8 text-center text-slate-400">
+            <td colspan="9" class="p-8 text-center text-slate-400">
               <div class="flex flex-col items-center justify-center gap-2">
                 <i class="fa-solid fa-user-slash text-2xl text-slate-300 dark:text-slate-600"></i>
                 <span class="text-xs font-semibold">${currentLang === 'ar' ? 'لا توجد نتائج مطابقة لبحثك' : 'No matching employees found'}</span>
@@ -2334,6 +2465,15 @@
             </td>
           </tr>
         `;
+        const emptyMobile = document.getElementById('employeesMobileCards');
+        if (emptyMobile) {
+          emptyMobile.innerHTML = `
+            <div class="p-6 text-center text-slate-400 glass-card rounded-2xl">
+              <i class="fa-solid fa-user-slash text-2xl text-slate-300 dark:text-slate-600 mb-1"></i>
+              <div class="text-xs font-semibold">${currentLang === 'ar' ? 'لا توجد نتائج مطابقة لبحثك' : 'No matching employees found'}</div>
+            </div>
+          `;
+        }
         return;
       }
 
@@ -2423,10 +2563,10 @@
             const jobTitleDisplay = emp.jobTitle || (isAdminRole ? 'المدير العام' : 'موظف مبيعات');
 
             return `
-              <div class="bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border rounded-2xl p-4 shadow-sm space-y-3">
+              <div class="glass-card lift-card rounded-2xl p-4 space-y-3">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl ${isAdminRole ? 'bg-amber-500 text-slate-950' : 'bg-brand-500 text-white'} font-black text-sm flex items-center justify-center shrink-0 shadow-sm">
+                    <div class="w-12 h-12 rounded-full ${isAdminRole ? 'bg-amber-500 text-slate-950' : 'bg-brand-500 text-white'} font-black text-sm flex items-center justify-center shrink-0 shadow-glow">
                       ${emp.avatar || emp.name.slice(0, 2).toUpperCase()}
                     </div>
                     <div>
@@ -2434,7 +2574,7 @@
                       <div class="text-xs text-amber-600 dark:text-amber-400 font-bold">${jobTitleDisplay}</div>
                     </div>
                   </div>
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isAdminRole ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300' : 'bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300'}">
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold badge-glow ${isAdminRole ? 'bg-amber-500/15 text-amber-400' : 'bg-brand-500/15 text-brand-400'}">
                     ${isAdminRole ? 'ADMIN' : 'STAFF'}
                   </span>
                 </div>
@@ -2459,20 +2599,20 @@
                 </div>
 
                 <!-- Touch Friendly Large Buttons -->
-                <div class="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-dark-border">
+                <div class="flex items-center gap-2 pt-2 border-t border-slate-100/70 dark:border-white/10">
                   <button onclick="viewEmployeeDetails('${emp.id}')"
-                    class="h-11 flex-1 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition">
+                    class="btn-press h-12 flex-1 rounded-2xl bg-brand-500/10 text-brand-500 font-bold text-xs flex items-center justify-center gap-1.5">
                     <i class="fa-solid fa-eye text-xs"></i>
                     <span>تفاصيل</span>
                   </button>
                   <button onclick="openEditEmployeeModal('${emp.id}')"
-                    class="h-11 flex-1 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition">
+                    class="btn-press h-12 flex-1 rounded-2xl bg-amber-500/15 text-amber-500 font-bold text-xs flex items-center justify-center gap-1.5">
                     <i class="fa-solid fa-pen-to-square text-xs"></i>
                     <span>تعديل</span>
                   </button>
                   ${!isSelf ? `
                     <button onclick="openDeleteEmployeeModal('${emp.id}', '${safeName}')"
-                      class="h-11 px-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold text-xs flex items-center justify-center active:scale-95 transition"
+                      class="btn-press h-12 px-3.5 rounded-2xl bg-rose-500/10 text-rose-500 font-bold text-xs flex items-center justify-center"
                       title="حذف حساب الموظف">
                       <i class="fa-solid fa-trash-can text-sm"></i>
                     </button>
@@ -2934,7 +3074,7 @@
           const lowStock = p.quantity <= 30;
           const safeName = p.name.replace(/'/g, "\\'");
           return `
-            <div class="bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border rounded-2xl p-4 shadow-sm space-y-3">
+            <div class="glass-card lift-card rounded-2xl p-4 space-y-3">
               <div class="flex justify-between items-start gap-2">
                 <div>
                   <h4 class="font-bold text-slate-900 dark:text-white text-sm">${p.name}</h4>
@@ -2945,7 +3085,7 @@
                 </div>
                 <div class="text-right">
                   <span class="text-sm font-black text-slate-900 dark:text-white block">${formatMoney(p.retailPrice)}</span>
-                  <span class="text-[11px] font-bold px-2 py-0.5 rounded-full inline-block mt-0.5 ${lowStock ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300'}">
+                  <span class="text-[11px] font-bold px-2 py-0.5 rounded-full inline-block mt-0.5 ${lowStock ? 'bg-rose-500/15 text-rose-400' : 'bg-emerald-500/15 text-profit badge-glow-emerald'}">
                     ${p.quantity} قطعة
                   </span>
                 </div>
@@ -2959,25 +3099,25 @@
               ` : ''}
 
               <!-- Touch Friendly Action Bar -->
-              <div class="flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-dark-border">
+              <div class="flex items-center gap-2 pt-1 border-t border-slate-100/70 dark:border-white/10">
                 ${isAdmin ? `
                   <button onclick="quickStock('${p.id}', 5)"
-                    class="h-11 px-3.5 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 font-black rounded-xl text-xs flex items-center justify-center gap-1 active:scale-95 transition"
+                    class="btn-press h-12 px-3.5 bg-emerald-500/10 text-profit font-black rounded-2xl text-xs flex items-center justify-center gap-1"
                     title="إضافة 5 قطع">+5 مخزون</button>
                   <button onclick="quickStock('${p.id}', -1)"
-                    class="h-11 px-3.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs flex items-center justify-center gap-1 active:scale-95 transition"
+                    class="btn-press h-12 px-3.5 glass-panel text-slate-700 dark:text-slate-300 font-bold rounded-2xl text-xs flex items-center justify-center gap-1"
                     title="خصم قطعة">-1</button>
                 ` : ''}
                 
                 <button onclick="quickSellProduct('${p.id}')"
-                  class="h-11 flex-1 bg-brand-50 dark:bg-brand-950/40 hover:bg-brand-100 text-brand-600 dark:text-brand-300 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 active:scale-95 transition">
+                  class="btn-press h-12 flex-1 bg-brand-600 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 shadow-glow">
                   <i class="fa-solid fa-cart-shopping text-xs"></i>
                   <span>بيع POS</span>
                 </button>
 
                 ${isAdmin ? `
                   <button onclick="promptDeleteProduct('${p.id}', '${safeName}')"
-                    class="h-11 w-11 flex items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 active:scale-95 transition"
+                    class="btn-press h-12 w-12 flex items-center justify-center rounded-2xl bg-rose-500/10 text-rose-500"
                     title="حذف المنتج">
                     <i class="fa-solid fa-trash-can text-sm"></i>
                   </button>
@@ -3473,7 +3613,7 @@
       if (!list) return;
 
       if (!txList || !txList.length) {
-        list.innerHTML = `<div class="p-8 text-center text-slate-400 bg-white dark:bg-dark-card rounded-2xl border border-slate-200 dark:border-dark-border">
+        list.innerHTML = `<div class="p-8 text-center text-slate-400 glass-card rounded-2xl">
           <i class="fa-solid fa-clock-rotate-left text-3xl mb-2 block opacity-30"></i>
           ${currentLang === 'ar' ? 'لا توجد حركات مسجلة بعد' : 'No transactions recorded yet'}
         </div>`;
@@ -3481,7 +3621,7 @@
       }
 
       list.innerHTML = txList.map(tx => `
-        <div class="flex justify-between items-center p-4 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border shadow-sm text-xs">
+        <div class="flex justify-between items-center p-4 rounded-2xl glass-card lift-card text-xs">
           <div class="flex items-center gap-3">
             <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white ${tx.type === 'sale' ? 'bg-emerald-500' : 'bg-amber-500'}">
               <i class="fa-solid ${tx.type === 'sale' ? 'fa-bag-shopping' : 'fa-rotate-left'}"></i>
@@ -3675,6 +3815,37 @@
       }
     }
 
+    function sparklinePoints(values, w = 120, h = 36, pad = 4) {
+      const src = (values && values.length) ? values.map(v => Number(v) || 0) : [0, 0, 0, 0, 0, 0];
+      const max = Math.max(...src, 1);
+      const min = Math.min(...src, 0);
+      const span = max - min || 1;
+      return src.map((v, i) => {
+        const x = src.length === 1 ? w / 2 : (i / (src.length - 1)) * w;
+        const y = pad + (h - pad * 2) - ((v - min) / span) * (h - pad * 2);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(' ');
+    }
+
+    function renderKpiSparklines(trends, financials) {
+      const t = (trends && (trends[currentTrendInterval] || trends.weekly)) || { revenue: [], profit: [] };
+      const rev = t.revenue || [];
+      const profit = t.profit || [];
+      const cogs = rev.map((r, i) => Math.max(0, (Number(r) || 0) - (Number(profit[i]) || 0)));
+      const stockBase = Number(financials?.totalItemsInStock) || 0;
+      const stock = rev.length
+        ? rev.map((_, i) => Math.max(0, stockBase * (1 - (i / Math.max(rev.length, 1)) * 0.12)))
+        : [stockBase, stockBase];
+      const setPts = (id, pts) => { const el = document.getElementById(id); if (el) el.setAttribute('points', pts); };
+      const revPts = sparklinePoints(rev);
+      setPts('sparkRevenueLine', revPts);
+      setPts('sparkProfitLine', sparklinePoints(profit));
+      setPts('sparkCogsLine', sparklinePoints(cogs));
+      setPts('sparkStockLine', sparklinePoints(stock));
+      const fill = document.getElementById('sparkRevenueFill');
+      if (fill) fill.setAttribute('points', `0,36 ${revPts} 120,36`);
+    }
+
     function applyAnalyticsData(data) {
       if (!data) return;
 
@@ -3700,6 +3871,8 @@
           ? (count > 0 ? `${count} أصناف بحاجة لإعادة طلب` : 'المخزون بوضع ممتاز')
           : (count > 0 ? `${count} items below safe reorder limit` : 'Stock in optimal state');
       }
+
+      renderKpiSparklines(trendsData, f);
 
       // Render Charts with safety checks
       renderCharts(trendsData, data.categoryBreakdown || EMPTY_ANALYTICS.categoryBreakdown);
