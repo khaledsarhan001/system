@@ -29,10 +29,22 @@ jobs:
         with:
           enablement: true
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Build the unified app
+        run: npm ci && npm run build
+        env:
+          GITHUB_PAGES: 'true'
+          VITE_API_URL: https://apparel-inventory.k44473579.workers.dev
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: './dist'
 
       - name: Deploy to GitHub Pages
         id: deployment

@@ -1,10 +1,11 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { jwt, sign } from 'hono/jwt';
+import { sign, verify } from 'hono/jwt';
 import { D1Repository, type Product } from './d1-repository';
 import { DEFAULT_PERMISSIONS, PERMISSION_LABELS, type Env, type Permission, type User } from './types';
 
-type Variables = { user: User };
+type JwtClaims = { sub?: string; role?: string; exp?: number; [key: string]: unknown };
+type Variables = { user: User; jwtPayload: JwtClaims };
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 app.use('/api/*', cors({ origin: '*', allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], allowHeaders: ['Content-Type', 'Authorization'] }));
@@ -16,15 +17,24 @@ app.use('/api/*', async (c, next) => {
   }
 });
 
-const tokenAuth = jwt({ secret: (c) => c.env.JWT_SECRET, alg: 'HS256' });
 app.use('/api/*', async (c, next) => {
   if (c.req.path === '/api/auth/login' || c.req.path === '/api/health' || c.req.method === 'OPTIONS') return next();
-  return tokenAuth(c, next);
+  const authorization = c.req.header('Authorization') ?? '';
+  const token = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
+  if (!token) return c.json({ success: false, message: 'Authentication required.' }, 401);
+  try {
+    const claims = await verify(token, c.env.JWT_SECRET, 'HS256');
+    if (typeof claims.sub !== 'string' || !claims.sub) return c.json({ success: false, message: 'Invalid session token.' }, 401);
+    c.set('jwtPayload', claims as JwtClaims);
+    await next();
+  } catch {
+    return c.json({ success: false, message: 'Session expired or invalid. Please sign in again.' }, 401);
+  }
 });
 
 app.use('/api/*', async (c, next) => {
   if (c.req.path === '/api/auth/login' || c.req.path === '/api/health' || c.req.method === 'OPTIONS') return next();
-  const claims = c.get('jwtPayload') as { sub?: string } | undefined;
+  const claims = c.get('jwtPayload');
   if (!claims?.sub) return c.json({ success: false, message: 'Authentication required.' }, 401);
   const user = await new D1Repository(c.env.DB).getUserById(claims.sub);
   if (!user || !user.isActive) return c.json({ success: false, message: 'Account is unavailable.' }, 401);
@@ -44,6 +54,7 @@ function requirePermission(permission: Permission) {
 
 function cleanUser(user: User) {
   return { id: user.id, name: user.name, username: user.username, email: user.email,
+    phone: user.phone ?? '', branch: user.branch ?? '', jobTitle: user.jobTitle ?? '',
     role: user.role, isActive: user.isActive, permissions: { ...DEFAULT_PERMISSIONS, ...user.permissions } };
 }
 
@@ -94,6 +105,49 @@ app.post('/api/products', requirePermission('productsWrite'), async (c) => {
   return c.json({ success: true, data: document }, 201);
 });
 
+app.post('/api/employees', async (c) => {
+  if (c.get('user').role !== 'admin') return c.json({ success: false, message: 'Administrator access required.' }, 403);
+  const body = await c.req.json<{ name?: string; username?: string; email?: string; password?: string; phone?: string; branch?: string; jobTitle?: string; permissions?: Record<string, unknown> }>();
+  const name = body.name?.trim() ?? '', username = body.username?.trim().toLowerCase() ?? '', email = body.email?.trim().toLowerCase() ?? '';
+  if (!name || !/^[a-z0-9._-]{3,40}$/.test(username) || !/^\S+@\S+\.\S+$/.test(email) || (body.password?.length ?? 0) < 8) {
+    return c.json({ success: false, message: 'أدخل الاسم واسم مستخدم صالحًا وبريدًا إلكترونيًا وكلمة مرور من 8 أحرف على الأقل.' }, 400);
+  }
+  const permissions = { ...DEFAULT_PERMISSIONS };
+  for (const key of Object.keys(DEFAULT_PERMISSIONS) as Permission[]) {
+    if (body.permissions?.[key] !== undefined) {
+      if (typeof body.permissions[key] !== 'boolean') return c.json({ success: false, message: 'صلاحيات الموظف يجب أن تكون قيمًا منطقية.' }, 400);
+      permissions[key] = body.permissions[key] as boolean;
+    }
+  }
+  const credentials = await hashPassword(body.password!);
+  try {
+    const user = await new D1Repository(c.env.DB).createEmployee({ id: crypto.randomUUID(), name, username, email,
+      phone: body.phone, branch: body.branch, jobTitle: body.jobTitle, ...credentials, permissions });
+    return c.json({ success: true, data: user && cleanUser(user) }, 201);
+  } catch (error) {
+    return c.json({ success: false, message: 'اسم المستخدم أو البريد الإلكتروني مستخدم بالفعل.' }, 409);
+  }
+});
+
+app.put('/api/employees/:id', async (c) => {
+  if (c.get('user').role !== 'admin') return c.json({ success: false, message: 'Administrator access required.' }, 403);
+  const body = await c.req.json<{ name?: string; username?: string; email?: string; phone?: string; branch?: string; jobTitle?: string; isActive?: boolean }>();
+  if (body.email !== undefined && !/^\S+@\S+\.\S+$/.test(body.email.trim())) return c.json({ success: false, message: 'أدخل بريدًا إلكترونيًا صحيحًا.' }, 400);
+  if (body.username !== undefined && !/^[a-z0-9._-]{3,40}$/i.test(body.username.trim())) return c.json({ success: false, message: 'اسم المستخدم يجب أن يحتوي على 3 أحرف على الأقل.' }, 400);
+  const patch = { ...body, ...(body.name !== undefined ? { name: body.name.trim() } : {}), ...(body.username !== undefined ? { username: body.username.trim().toLowerCase() } : {}), ...(body.email !== undefined ? { email: body.email.trim().toLowerCase() } : {}) };
+  try {
+    const updated = await new D1Repository(c.env.DB).updateEmployee(c.req.param('id'), patch);
+    if (!updated) return c.json({ success: false, message: 'Employee not found.' }, 404);
+    return c.json({ success: true, data: cleanUser(updated) });
+  } catch (error) { return c.json({ success: false, message: error instanceof Error ? error.message : 'تعذر تحديث الموظف.' }, 409); }
+});
+
+app.delete('/api/employees/:id', async (c) => {
+  if (c.get('user').role !== 'admin') return c.json({ success: false, message: 'Administrator access required.' }, 403);
+  const removed = await new D1Repository(c.env.DB).deactivateEmployee(c.req.param('id'));
+  return removed ? c.json({ success: true }) : c.json({ success: false, message: 'Employee not found.' }, 404);
+});
+
 app.put('/api/products/:id', requirePermission('productsWrite'), async (c) => {
   const patch = await c.req.json<Record<string, unknown>>();
   const error = validateProduct(patch, true);
@@ -117,6 +171,38 @@ app.get('/api/employees', requirePermission('employeesRead'), async (c) => {
 
 app.get('/api/analytics', requirePermission('analyticsRead'), async (c) => {
   return c.json({ success: true, data: await new D1Repository(c.env.DB).analytics() });
+});
+
+app.get('/api/transactions', requirePermission('analyticsRead'), async (c) => {
+  return c.json({ success: true, data: await new D1Repository(c.env.DB).listTransactions() });
+});
+
+app.post('/api/returns', requirePermission('salesCreate'), async (c) => {
+  const body = await c.req.json<{ items?: { productId: string; quantity: number; color?: string; size?: string }[]; reason?: string }>();
+  if (!Array.isArray(body.items) || !body.items.length || body.items.some((x) => !x.productId || !Number.isInteger(x.quantity) || x.quantity < 1)) {
+    return c.json({ success: false, message: 'حدد المنتجات والكميات الصحيحة للمرتجع.' }, 400);
+  }
+  const db = new D1Repository(c.env.DB); const items: { product: Product; quantity: number; color: string; size: string }[] = [];
+  for (const item of body.items) {
+    const product = await db.getProduct(item.productId);
+    if (!product) return c.json({ success: false, message: 'أحد المنتجات غير موجود.' }, 404);
+    items.push({ product, quantity: item.quantity, color: item.color ?? product.colors[0] ?? '', size: item.size ?? '' });
+  }
+  const transaction = await db.createReturn(c.get('user').id, items, (body.reason ?? '').slice(0, 500));
+  return c.json({ success: true, data: transaction }, 201);
+});
+
+app.post('/api/legacy/import', async (c) => {
+  const user = c.get('user');
+  if (user.role !== 'admin') return c.json({ success: false, message: 'Administrator access required.' }, 403);
+  const body = await c.req.json<{ products?: unknown[]; transactions?: unknown[] }>();
+  if (!Array.isArray(body.products) || !Array.isArray(body.transactions) || body.products.length > 2000 || body.transactions.length > 10000) {
+    return c.json({ success: false, message: 'بيانات الإصدار السابق غير صالحة أو أكبر من الحد المسموح.' }, 400);
+  }
+  const products = body.products.filter((item): item is Record<string, any> => !!item && typeof item === 'object');
+  const transactions = body.transactions.filter((item): item is Record<string, any> => !!item && typeof item === 'object');
+  const result = await new D1Repository(c.env.DB).importLegacyCatalog(user.id, products, transactions);
+  return c.json({ success: true, data: result });
 });
 
 app.put('/api/employees/:id/permissions', async (c) => {
@@ -157,7 +243,9 @@ function validateProduct(value: Record<string, unknown>, partial = false): strin
   if (value.name !== undefined && (typeof value.name !== 'string' || !value.name.trim())) return 'Product name is required.';
   if (value.sku !== undefined && (typeof value.sku !== 'string' || !/^[A-Za-z0-9-]+$/.test(value.sku.trim()))) return 'SKU may contain letters, numbers and hyphens.';
   if (value.category !== undefined && !['Men', 'Women', 'Kids'].includes(String(value.category))) return 'Category must be Men, Women or Kids.';
+  if (value.productType !== undefined && (typeof value.productType !== 'string' || value.productType.length > 80)) return 'Product type must be 80 characters or fewer.';
   if (value.retailPrice !== undefined && (!Number.isFinite(Number(value.retailPrice)) || Number(value.retailPrice) < 0)) return 'Price must be zero or greater.';
+  if (value.costPrice !== undefined && (!Number.isFinite(Number(value.costPrice)) || Number(value.costPrice) < 0)) return 'Cost price must be zero or greater.';
   if (value.quantity !== undefined && (!Number.isInteger(Number(value.quantity)) || Number(value.quantity) < 0)) return 'Quantity must be a non-negative integer.';
   if (value.colors !== undefined && (!Array.isArray(value.colors) || !value.colors.length || value.colors.some((x) => typeof x !== 'string' || !x.trim()))) return 'Add at least one valid color.';
   return null;
@@ -167,6 +255,7 @@ function normalizeProduct(value: Record<string, any>): any {
   const result = { ...value };
   if (typeof result.sku === 'string') result.sku = result.sku.trim().toUpperCase();
   if (typeof result.name === 'string') result.name = result.name.trim();
+  if (typeof result.productType === 'string') result.productType = result.productType.trim() || 'general';
   if (Array.isArray(result.colors)) result.colors = [...new Set(result.colors.map((x: string) => x.trim()).filter(Boolean))];
   if (result.retailPrice !== undefined) result.retailPrice = Number(result.retailPrice);
   if (result.quantity !== undefined) result.quantity = Number(result.quantity);

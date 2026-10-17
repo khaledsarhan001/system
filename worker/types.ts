@@ -11,6 +11,9 @@ export type User = {
   name: string;
   username: string;
   email: string;
+  phone?: string;
+  branch?: string;
+  jobTitle?: string;
   role: 'admin' | 'employee';
   isActive: boolean;
   permissions: Record<Permission, boolean>;
