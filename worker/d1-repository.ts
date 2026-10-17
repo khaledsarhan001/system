@@ -177,7 +177,7 @@ export class D1Repository {
       const productType = ['Men','Women','Kids'].includes(old.category) ? (old.productType ?? 'general') : String(old.category ?? 'general').slice(0,80);
       const product = { id: crypto.randomUUID(), name: String(old.name ?? 'منتج سابق').slice(0,150), sku,
         category, productType, retailPrice: Math.max(0, Number(old.retailPrice) || 0), costPrice: Math.max(0, Number(old.costPrice) || 0),
-        quantity: Math.max(0, Math.floor(Number(old.quantity) || 0)), colors: Array.isArray(old.colors) ? old.colors.map(String).slice(0,40) : [] };
+        quantity: Math.max(0, Math.floor(Number(old.quantity) || 0)), colors: Array.isArray(old.colors) ? old.colors.map(String).slice(0,40) : [], imageUrl: typeof old.imageUrl === 'string' ? old.imageUrl.slice(0, 1_500_000) : '' };
       await this.createProduct(product);
       if (old.id) idMap.set(String(old.id), product.id);
       bySku.set(sku, product.id); productsAdded++;
@@ -187,14 +187,17 @@ export class D1Repository {
       if (!['sale','return'].includes(old.type)) continue;
       const sourceId = old.id ? String(old.id).slice(0,200) : null;
       if (sourceId && await this.db.prepare('SELECT 1 AS found FROM transactions WHERE legacy_source_id=?').bind(sourceId).first()) continue;
-      const oldProductId = String(old.productId ?? ''); const productId = idMap.get(oldProductId) ?? '';
-      const quantity = Math.max(1, Math.floor(Number(old.quantity) || 1));
-      const item = { productId, productName: String(old.productName ?? 'منتج سابق'), sku: String(old.sku ?? ''), quantity,
-        unitPrice: Math.max(0, Number(old.unitPrice) || 0), costPriceAtSale: Math.max(0, Number(old.costPrice) || 0), color: '', size: '' };
+      const oldItems = Array.isArray(old.items) ? old.items : [old];
+      const items = oldItems.map((source: any) => {
+        const productId = idMap.get(String(source.productId ?? '')) ?? '';
+        const quantity = Math.max(1, Math.floor(Number(source.quantity) || 1));
+        return { productId, productName: String(source.productName ?? 'منتج سابق'), sku: String(source.sku ?? ''), quantity,
+          unitPrice: Math.max(0, Number(source.unitPrice) || 0), costPriceAtSale: Math.max(0, Number(source.costPriceAtSale ?? source.costPrice) || 0), color: String(source.color ?? ''), size: String(source.size ?? '') };
+      });
       const createdAt = Number.isFinite(Date.parse(old.createdAt)) ? new Date(old.createdAt).toISOString() : new Date().toISOString();
       await this.db.prepare(`INSERT INTO transactions (id,type,employee_id,items_json,total_amount,return_reason,employee_name_snapshot,legacy_source_id,created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(crypto.randomUUID(), old.type, employeeId, JSON.stringify([item]),
-          Math.max(0, Number(old.totalPrice ?? old.total) || item.unitPrice * quantity), String(old.reason ?? '').slice(0,500), String(old.employee ?? '').slice(0,100), sourceId, createdAt).run();
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(crypto.randomUUID(), old.type, employeeId, JSON.stringify(items),
+          Math.max(0, Number(old.totalAmount ?? old.totalPrice ?? old.total) || items.reduce((sum: number, item: any) => sum + item.unitPrice * item.quantity, 0)), String(old.returnReason ?? old.reason ?? '').slice(0,500), String(old.employeeName ?? old.employee ?? '').slice(0,100), sourceId, createdAt).run();
       transactionsAdded++;
     }
     return { productsAdded, transactionsAdded };
