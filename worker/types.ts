@@ -2,10 +2,7 @@ export type Permission = 'productsRead' | 'productsWrite' | 'salesCreate' | 'emp
 
 export type Env = {
   JWT_SECRET: string;
-  MONGODB_DATA_API_URL: string;
-  MONGODB_DATA_API_KEY: string;
-  MONGODB_DATABASE: string;
-  MONGODB_DATASOURCE: string;
+  DB: D1Database;
   ASSETS: Fetcher;
 };
 

@@ -1,13 +1,11 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { jwt, sign } from 'hono/jwt';
-import bcrypt from 'bcryptjs';
-import { MongoDataApi } from './data-api';
+import { D1Repository, type Product } from './d1-repository';
 import { DEFAULT_PERMISSIONS, PERMISSION_LABELS, type Env, type Permission, type User } from './types';
 
 type Variables = { user: User };
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
-const collections = { users: 'users', products: 'products', sales: 'transactions' };
 
 app.use('/api/*', cors({ origin: '*', allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], allowHeaders: ['Content-Type', 'Authorization'] }));
 app.use('/api/*', async (c, next) => {
@@ -28,11 +26,9 @@ app.use('/api/*', async (c, next) => {
   if (c.req.path === '/api/auth/login' || c.req.path === '/api/health' || c.req.method === 'OPTIONS') return next();
   const claims = c.get('jwtPayload') as { sub?: string } | undefined;
   if (!claims?.sub) return c.json({ success: false, message: 'Authentication required.' }, 401);
-  const db = new MongoDataApi(c.env);
-  const result = await db.findOne<User & { passwordHash?: string }>(collections.users, byId(claims.sub));
-  const user = result.document;
+  const user = await new D1Repository(c.env.DB).getUserById(claims.sub);
   if (!user || !user.isActive) return c.json({ success: false, message: 'Account is unavailable.' }, 401);
-  c.set('user', { ...user, id: entityId(user), permissions: { ...DEFAULT_PERMISSIONS, ...user.permissions } });
+  c.set('user', { ...user, permissions: { ...DEFAULT_PERMISSIONS, ...user.permissions } });
   await next();
 });
 
@@ -46,17 +42,9 @@ function requirePermission(permission: Permission) {
   };
 }
 
-function cleanUser(user: User & { passwordHash?: string; passwordSalt?: string; password?: string }) {
-  const { passwordHash: _passwordHash, passwordSalt: _passwordSalt, password: _password, ...safe } = user;
-  return { ...safe, id: entityId(user), permissions: { ...DEFAULT_PERMISSIONS, ...user.permissions } };
-}
-
-function entityId(document: Record<string, any>): string {
-  return document.id ?? document._id?.$oid ?? document._id ?? '';
-}
-
-function byId(id: string) {
-  return /^[a-f\d]{24}$/i.test(id) ? { $or: [{ id }, { _id: { $oid: id } }] } : { id };
+function cleanUser(user: User) {
+  return { id: user.id, name: user.name, username: user.username, email: user.email,
+    role: user.role, isActive: user.isActive, permissions: { ...DEFAULT_PERMISSIONS, ...user.permissions } };
 }
 
 async function hashPassword(password: string, salt = crypto.getRandomValues(new Uint8Array(16))) {
@@ -72,22 +60,18 @@ async function verifyPassword(password: string, saltHex: string, expected: strin
   return actual.length === expected.length && [...actual].reduce((diff, ch, i) => diff | (ch.charCodeAt(0) ^ expected.charCodeAt(i)), 0) === 0;
 }
 
-app.get('/api/health', (c) => c.json({ success: true, runtime: 'cloudflare-workers', database: 'http-data-api' }));
+app.get('/api/health', (c) => c.json({ success: true, runtime: 'cloudflare-workers', database: 'cloudflare-d1' }));
 
 app.post('/api/auth/login', async (c) => {
   const body = await c.req.json<{ identifier?: string; username?: string; email?: string; password?: string }>();
   const identifier = (body.identifier || body.username || body.email || '').trim().toLowerCase();
   if (!identifier || !body.password) return c.json({ success: false, message: 'Username/email and password are required.' }, 400);
-  const db = new MongoDataApi(c.env);
-  const found = await db.findOne<User & { passwordHash?: string; passwordSalt?: string; password?: string }>(collections.users, { $or: [{ username: identifier }, { email: identifier }] });
-  const user = found.document;
-  const validPassword = user?.passwordHash && user.passwordSalt
-    ? await verifyPassword(body.password, user.passwordSalt, user.passwordHash)
-    : user?.password ? await bcrypt.compare(body.password, user.password) : false;
+  const user = await new D1Repository(c.env.DB).getUserByIdentifier(identifier);
+  const validPassword = user ? await verifyPassword(body.password, user.passwordSalt, user.passwordHash) : false;
   if (!user || !user.isActive || !validPassword) {
     return c.json({ success: false, message: 'Invalid credentials.' }, 401);
   }
-  const token = await sign({ sub: entityId(user), role: user.role, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7 }, c.env.JWT_SECRET, 'HS256');
+  const token = await sign({ sub: user.id, role: user.role, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7 }, c.env.JWT_SECRET, 'HS256');
   return c.json({ success: true, token, data: cleanUser(user) });
 });
 
@@ -95,21 +79,17 @@ app.get('/api/auth/me', (c) => c.json({ success: true, data: cleanUser(c.get('us
 
 app.get('/api/products', requirePermission('productsRead'), async (c) => {
   const search = c.req.query('search')?.trim();
-  const filter: Record<string, unknown> = { isActive: { $ne: false } };
-  if (search) filter.$or = [{ name: { $regex: search, $options: 'i' } }, { sku: { $regex: search, $options: 'i' } }];
-  const result = await new MongoDataApi(c.env).find<Record<string, unknown>>(collections.products, filter, 200);
-  return c.json({ success: true, data: (result.documents ?? []).map((p) => ({ ...p, id: entityId(p) })) });
+  return c.json({ success: true, data: await new D1Repository(c.env.DB).listProducts(search) });
 });
 
 app.post('/api/products', requirePermission('productsWrite'), async (c) => {
   const product = await c.req.json<Record<string, unknown>>();
   const error = validateProduct(product);
   if (error) return c.json({ success: false, message: error }, 400);
-  const db = new MongoDataApi(c.env);
-  const exists = await db.findOne(collections.products, { sku: String(product.sku).trim().toUpperCase() });
-  if (exists.document) return c.json({ success: false, message: 'SKU already exists.' }, 409);
-  const document = normalizeProduct({ ...product, id: crypto.randomUUID(), isActive: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
-  await db.insertOne(collections.products, document);
+  const db = new D1Repository(c.env.DB);
+  const normalized = normalizeProduct(product);
+  if (await db.getProductBySku(normalized.sku)) return c.json({ success: false, message: 'SKU already exists.' }, 409);
+  const document = await db.createProduct({ ...normalized, id: crypto.randomUUID() });
   return c.json({ success: true, data: document }, 201);
 });
 
@@ -117,39 +97,25 @@ app.put('/api/products/:id', requirePermission('productsWrite'), async (c) => {
   const patch = await c.req.json<Record<string, unknown>>();
   const error = validateProduct(patch, true);
   if (error) return c.json({ success: false, message: error }, 400);
-  const document = normalizeProduct({ ...patch, updatedAt: new Date().toISOString() });
-  delete document.id;
-  const db = new MongoDataApi(c.env);
-  if (document.sku) {
-    const duplicate = await db.findOne<Record<string, any>>(collections.products, { sku: String(document.sku), isActive: { $ne: false } });
-    if (duplicate.document && entityId(duplicate.document) !== c.req.param('id')) return c.json({ success: false, message: 'SKU already exists.' }, 409);
+  const db = new D1Repository(c.env.DB);
+  const id = c.req.param('id');
+  const normalized = normalizeProduct(patch);
+  if (normalized.sku) {
+    const duplicate = await db.getProductBySku(normalized.sku);
+    if (duplicate && duplicate.id !== id) return c.json({ success: false, message: 'SKU already exists.' }, 409);
   }
-  const result = await db.updateOne<Record<string, unknown>>(collections.products, byId(c.req.param('id')), { $set: document });
-  if (!result.matchedCount) return c.json({ success: false, message: 'Product not found.' }, 404);
-  const updated = await db.findOne<Record<string, unknown>>(collections.products, byId(c.req.param('id')));
-  return c.json({ success: true, data: updated.document ? { ...updated.document, id: entityId(updated.document) } : null });
+  const updated = await db.updateProduct(id, normalized);
+  if (!updated) return c.json({ success: false, message: 'Product not found.' }, 404);
+  return c.json({ success: true, data: updated });
 });
 
 app.get('/api/employees', requirePermission('employeesRead'), async (c) => {
-  const result = await new MongoDataApi(c.env).find<User & { passwordHash?: string }>(collections.users, { role: 'employee' }, 200);
-  return c.json({ success: true, data: (result.documents ?? []).map(cleanUser) });
+  const result = await new D1Repository(c.env.DB).listEmployees();
+  return c.json({ success: true, data: result.map(cleanUser) });
 });
 
 app.get('/api/analytics', requirePermission('analyticsRead'), async (c) => {
-  const db = new MongoDataApi(c.env);
-  const [productResult, salesResult] = await Promise.all([
-    db.find<Record<string, any>>(collections.products, { isActive: { $ne: false } }, 1000),
-    db.find<Record<string, any>>(collections.sales, { type: 'sale' }, 1000),
-  ]);
-  const products = productResult.documents ?? [];
-  const sales = salesResult.documents ?? [];
-  return c.json({ success: true, data: {
-    products: products.length,
-    unitsInStock: products.reduce((sum, product) => sum + Number(product.quantity || 0), 0),
-    lowStock: products.filter((product) => Number(product.quantity || 0) < 5).length,
-    salesCount: sales.length,
-    revenue: sales.reduce((sum, sale) => sum + Number(sale.totalAmount || 0), 0),
-  } });
+  return c.json({ success: true, data: await new D1Repository(c.env.DB).analytics() });
 });
 
 app.put('/api/employees/:id/permissions', async (c) => {
@@ -159,11 +125,9 @@ app.put('/api/employees/:id/permissions', async (c) => {
   if (!body.permissions || allowed.some((key) => typeof body.permissions?.[key] !== 'boolean') || Object.keys(body.permissions).some((key) => !allowed.includes(key as Permission))) {
     return c.json({ success: false, message: 'Send a boolean value for every supported permission.' }, 400);
   }
-  const db = new MongoDataApi(c.env);
-  const result = await db.updateOne<User>(collections.users, { $and: [byId(c.req.param('id')), { role: 'employee' }] }, { $set: { permissions: body.permissions, updatedAt: new Date().toISOString() } });
-  if (!result.matchedCount) return c.json({ success: false, message: 'Employee not found.' }, 404);
-  const updated = await db.findOne<User & { passwordHash?: string }>(collections.users, byId(c.req.param('id')));
-  return c.json({ success: true, data: cleanUser(updated.document!) });
+  const updated = await new D1Repository(c.env.DB).updateEmployeePermissions(c.req.param('id'), body.permissions as Record<Permission, boolean>);
+  if (!updated) return c.json({ success: false, message: 'Employee not found.' }, 404);
+  return c.json({ success: true, data: cleanUser(updated) });
 });
 
 app.post('/api/sales', requirePermission('salesCreate'), async (c) => {
@@ -171,26 +135,17 @@ app.post('/api/sales', requirePermission('salesCreate'), async (c) => {
   if (!Array.isArray(body.items) || !body.items.length || body.items.some((x) => !x.productId || !Number.isInteger(x.quantity) || x.quantity < 1)) {
     return c.json({ success: false, message: 'A sale requires valid product IDs and positive integer quantities.' }, 400);
   }
-  const db = new MongoDataApi(c.env);
-  const saleItems: Record<string, unknown>[] = [];
-  const adjusted: { id: string; quantity: number }[] = [];
-  let totalAmount = 0;
+  const db = new D1Repository(c.env.DB);
   try {
+    const items: { product: Product; quantity: number; color: string; size: string }[] = [];
     for (const item of body.items) {
-      const loaded = await db.findOne<Record<string, any>>(collections.products, { $and: [byId(item.productId), { isActive: { $ne: false } }] });
-      const product = loaded.document;
-      if (!product) throw new Error(`Product ${item.productId} was not found.`);
-      const stock = await db.updateOne(collections.products, { $and: [byId(item.productId), { quantity: { $gte: item.quantity } }] }, { $inc: { quantity: -item.quantity }, $set: { updatedAt: new Date().toISOString() } });
-      if (!stock.matchedCount) throw new Error(`Insufficient stock for ${product.name}.`);
-      adjusted.push({ id: item.productId, quantity: item.quantity });
-      totalAmount += Number(product.retailPrice) * item.quantity;
-      saleItems.push({ productId: item.productId, productName: product.name, sku: product.sku, quantity: item.quantity, color: item.color ?? product.colors?.[0] ?? '', size: item.size ?? '', unitPrice: Number(product.retailPrice) });
+      const product = await db.getProduct(item.productId);
+      if (!product) return c.json({ success: false, message: `Product ${item.productId} was not found.` }, 404);
+      items.push({ product, quantity: item.quantity, color: item.color ?? product.colors[0] ?? '', size: item.size ?? '' });
     }
-    const transaction = { id: crypto.randomUUID(), type: 'sale', employeeId: c.get('user').id, items: saleItems, totalAmount, createdAt: new Date().toISOString() };
-    await db.insertOne(collections.sales, transaction);
+    const transaction = await db.createSale(c.get('user').id, items);
     return c.json({ success: true, data: transaction }, 201);
   } catch (error) {
-    for (const item of adjusted.reverse()) await db.updateOne(collections.products, byId(item.id), { $inc: { quantity: item.quantity } });
     return c.json({ success: false, message: error instanceof Error ? error.message : 'Sale could not be completed.' }, 409);
   }
 });
@@ -207,7 +162,7 @@ function validateProduct(value: Record<string, unknown>, partial = false): strin
   return null;
 }
 
-function normalizeProduct<T extends Record<string, any>>(value: T): T {
+function normalizeProduct(value: Record<string, any>): any {
   const result = { ...value };
   if (typeof result.sku === 'string') result.sku = result.sku.trim().toUpperCase();
   if (typeof result.name === 'string') result.name = result.name.trim();

@@ -1,55 +1,73 @@
-# Cloudflare Workers + React implementation
+# Cloudflare Workers + React + D1
 
-This deployment uses Hono in a Cloudflare Worker and a React/Vite single-page app. The Worker makes HTTP `fetch` calls to the configured MongoDB Data API endpoint; it does not import Mongoose or a MongoDB driver. The legacy Express application remains available through the existing `server.js` scripts.
+This deployment serves the React/Vite application and the Hono API from one Cloudflare Worker. Cloudflare D1 stores users, products, and sales; there is no runtime dependency on Express, Mongoose, or Atlas Data API.
 
-## MongoDB service status
+## Create and configure D1
 
-MongoDB Atlas App Services Data API reached end of life on **September 30, 2025**. A new deployment in 2026 cannot use MongoDB's hosted Data API. The adapter in `worker/data-api.ts` implements the Data API HTTP action protocol for an endpoint that still supports it. To run this deployment, configure a compatible HTTP gateway that connects to MongoDB and supports `find`, `findOne`, `insertOne`, and `updateOne`, or replace the adapter with another supported database service. Do not expose the data API key in the React frontend.
+Install packages with `npm install`, then authenticate Wrangler with `npx wrangler login`. Create the production database:
 
-## Local configuration
-
-Create `.env` in the repository root for the one-time administrator setup command:
-
-```dotenv
-MONGODB_DATA_API_URL=https://your-compatible-endpoint.example/endpoint/data/v1/action
-MONGODB_DATA_API_KEY=your-server-side-key
-MONGODB_DATABASE=apparel_inventory
-MONGODB_DATASOURCE=Cluster0
-JWT_SECRET=replace-with-a-long-random-secret
-ADMIN_NAME=Store Administrator
-ADMIN_USERNAME=admin
-ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=replace-with-a-long-unique-password
+```sh
+npx wrangler d1 create apparel-inventory
 ```
 
-Create `.dev.vars` in the repository root for local Worker secrets:
+Copy the returned `database_id` into `wrangler.toml`, replacing `REPLACE_WITH_D1_DATABASE_ID`. Apply the schema locally for development and remotely for production:
+
+```sh
+npx wrangler d1 migrations apply apparel-inventory --local
+npx wrangler d1 migrations apply apparel-inventory --remote
+```
+
+For local development, create `.dev.vars` with a long random JWT secret:
 
 ```dotenv
-MONGODB_DATA_API_URL=https://your-compatible-endpoint.example/endpoint/data/v1/action
-MONGODB_DATA_API_KEY=your-server-side-key
 JWT_SECRET=replace-with-a-long-random-secret
 ```
 
-Install dependencies with `npm install`, then create the first Worker-format administrator using `npm run setup:admin`. The setup command inserts a PBKDF2 password hash and boolean permission flags in the `users` collection. Existing bcrypt hashes from the legacy Express app can also be used to sign in; the worker verifies them with bcryptjs.
-
-Run the React frontend with `npm run dev:worker` and the Hono API separately with `npx wrangler dev --port 8787`. Vite proxies `/api` requests to Wrangler. Build and deploy with `npm run deploy`. Add secrets before deployment:
+Set the production secret without putting it in Git:
 
 ```sh
 npx wrangler secret put JWT_SECRET
-npx wrangler secret put MONGODB_DATA_API_URL
-npx wrangler secret put MONGODB_DATA_API_KEY
 ```
 
-Set `MONGODB_DATABASE` and `MONGODB_DATASOURCE` in `wrangler.toml` or as Worker variables. The Worker serves the built React assets through the configured `ASSETS` binding.
+## Create the first admin
+
+Copy `.env.example` to `.env` and fill in the administrator name, username, email, and a strong password. Wrangler must already be logged in. Then run:
+
+```sh
+npm run setup:admin
+```
+
+The setup script inserts a PBKDF2 password hash and boolean permission flags into D1. Keep `.env` private; it is ignored by Git.
+
+## Run and deploy
+
+Run the Worker API and Vite frontend in separate terminals:
+
+```sh
+npx wrangler dev --port 8787
+npm run dev:worker
+```
+
+Build and publish the full app to a Cloudflare Workers URL:
+
+```sh
+npm run deploy
+```
+
+The first successful deploy prints the public `workers.dev` URL. The D1 binding and SQL migration are configured in `wrangler.toml` and `worker/migrations/0001_initial.sql`.
 
 ## API routes
 
 - `POST /api/auth/login`, `GET /api/auth/me`
 - `GET /api/products` (productsRead)
 - `POST /api/products`, `PUT /api/products/:id` (productsWrite)
-- `GET /api/employees` (employeesRead; admins bypass permission flags)
+- `GET /api/employees` (employeesRead; admins bypass employee flags)
 - `PUT /api/employees/:id/permissions` (admin only)
 - `GET /api/analytics` (analyticsRead)
 - `POST /api/sales` (salesCreate)
 
-Permissions are stored on each user as booleans: `productsRead`, `productsWrite`, `salesCreate`, `employeesRead`, and `analyticsRead`. Admin accounts bypass employee permission flags. Product categories are restricted to `Men`, `Women`, and `Kids`; the colors field accepts an arbitrary list of user-entered names.
+Permissions are saved as booleans in each user's `permissions_json`: `productsRead`, `productsWrite`, `salesCreate`, `employeesRead`, and `analyticsRead`. Admin users bypass employee permission flags. Product categories are `Men`, `Women`, and `Kids`; colors accept arbitrary user-entered names.
+
+## Existing MongoDB data
+
+The current MongoDB database is not automatically copied into D1. The D1 setup starts with empty tables; products and employees must be re-entered or migrated with a separate export/import step. MongoDB Atlas App Services Data API reached end of life on September 30, 2025, which is why this deployment uses D1 instead.

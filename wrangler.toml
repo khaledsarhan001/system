@@ -1,6 +1,6 @@
 name = "apparel-inventory"
 main = "worker/index.ts"
-compatibility_date = "2026-10-18"
+compatibility_date = "2025-09-01"
 
 [assets]
 directory = "./dist"
@@ -9,9 +9,12 @@ not_found_handling = "single-page-application"
 run_worker_first = ["/api/*"]
 
 [vars]
-MONGODB_DATABASE = "apparel_inventory"
-MONGODB_DATASOURCE = "Cluster0"
+APP_ENV = "production"
 
-# Set secrets with `npx wrangler secret put JWT_SECRET` and
-# `npx wrangler secret put MONGODB_DATA_API_KEY`.
-# Set MONGODB_DATA_API_URL as a secret/var to a Data API-compatible HTTP endpoint.
+# Create the database with `npx wrangler d1 create apparel-inventory`
+# and replace this placeholder with the returned database_id.
+[[d1_databases]]
+binding = "DB"
+database_name = "apparel-inventory"
+database_id = "22f31262-f12b-4cb8-a7f2-a5403aa1c0ad"
+migrations_dir = "worker/migrations"
