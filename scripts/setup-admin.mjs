@@ -13,11 +13,13 @@ const sqlQuote = (value) => `'${String(value).replaceAll("'", "''")}'`;
 const username = ADMIN_USERNAME.trim().toLowerCase();
 const email = ADMIN_EMAIL.trim().toLowerCase();
 const salt = randomBytes(16);
-const passwordHash = pbkdf2Sync(ADMIN_PASSWORD, salt, 210_000, 32, 'sha256').toString('hex');
+const passwordHash = pbkdf2Sync(ADMIN_PASSWORD, salt, 100_000, 32, 'sha256').toString('hex');
 const permissions = JSON.stringify({ productsRead: true, productsWrite: true, salesCreate: true, employeesRead: true, analyticsRead: true });
 const now = new Date().toISOString();
 const values = [randomUUID(), ADMIN_NAME.trim(), username, email, passwordHash, salt.toString('hex'), permissions, now, now].map(sqlQuote);
-const sql = `INSERT INTO users (id,name,username,email,role,password_hash,password_salt,is_active,permissions_json,created_at,updated_at)
+const sql = `UPDATE users SET password_hash=${values[4]},password_salt=${values[5]},is_active=1,updated_at=${values[8]}
+WHERE username=${values[2]} OR email=${values[3]};
+INSERT INTO users (id,name,username,email,role,password_hash,password_salt,is_active,permissions_json,created_at,updated_at)
 SELECT ${values[0]},${values[1]},${values[2]},${values[3]},'admin',${values[4]},${values[5]},1,${values[6]},${values[7]},${values[8]}
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = ${values[2]} OR email = ${values[3]});`;
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');

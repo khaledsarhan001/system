@@ -49,7 +49,8 @@ function cleanUser(user: User) {
 
 async function hashPassword(password: string, salt = crypto.getRandomValues(new Uint8Array(16))) {
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
-  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 210_000, hash: 'SHA-256' }, key, 256);
+  // Cloudflare Workers caps PBKDF2 at 100,000 iterations.
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 100_000, hash: 'SHA-256' }, key, 256);
   return { passwordHash: [...new Uint8Array(bits)].map((b) => b.toString(16).padStart(2, '0')).join(''), passwordSalt: [...salt].map((b) => b.toString(16).padStart(2, '0')).join('') };
 }
 
@@ -172,8 +173,16 @@ function normalizeProduct(value: Record<string, any>): any {
   return result;
 }
 
-app.notFound((c) => c.req.path.startsWith('/api/')
-  ? c.json({ success: false, message: 'API route not found.' }, 404)
-  : c.env.ASSETS.fetch(c.req.raw));
+app.notFound(async (c) => {
+  if (c.req.path.startsWith('/api/')) return c.json({ success: false, message: 'API route not found.' }, 404);
+  const response = await c.env.ASSETS.fetch(c.req.raw);
+  if (response.headers.get('content-type')?.includes('text/html')) {
+    const headers = new Headers(response.headers);
+    headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    headers.set('Pragma', 'no-cache');
+    return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+  }
+  return response;
+});
 
 export default app;
