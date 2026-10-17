@@ -66,9 +66,9 @@ function App() {
     event.preventDefault(); setBusy(true); setMessage('');
     const form = new FormData(event.currentTarget);
     try {
-      const result = await fetch('/api/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ identifier: form.get('identifier'), password: form.get('password') }) });
+      const result = await fetch('/api/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ identifier: form.get('identifier'), password: form.get('access-code') }) });
       const body = await result.json();
-      if (!result.ok) throw new Error(body.message || 'تعذر تسجيل الدخول');
+      if (!result.ok) throw new Error(result.status === 401 ? 'اسم المستخدم أو كلمة المرور غير صحيحة. اكتب كلمة المرور يدويًا.' : body.message || `تعذر تسجيل الدخول (${result.status})`);
       localStorage.setItem('apparel_token', body.token); setToken(body.token); setUser(body.data);
     } catch (e) { setMessage(e instanceof Error ? e.message : 'تعذر تسجيل الدخول'); }
     finally { setBusy(false); }
@@ -130,7 +130,7 @@ function App() {
     } catch (e) { setMessage(e instanceof Error ? e.message : 'تعذر حفظ الصلاحيات'); }
   }
 
-  if (!token || !user) return <main className="login-shell"><form className="login-card" onSubmit={login}><div className="brand-mark">✦</div><p className="eyebrow">APPAREL INVENTORY</p><h1>مرحبًا بعودتك</h1><p className="muted">سجّل الدخول لإدارة المخزون والمبيعات</p><label>اسم المستخدم أو البريد<input name="identifier" autoComplete="username" required /></label><label>كلمة المرور<input name="password" type="password" autoComplete="current-password" required /></label>{message && <div className="notice error">{message}</div>}<button className="primary full" disabled={busy}>{busy ? 'جارٍ الدخول…' : 'تسجيل الدخول'} <span>←</span></button></form></main>;
+  if (!token || !user) return <main className="login-shell"><form className="login-card" onSubmit={login} autoComplete="off"><div className="brand-mark">✦</div><p className="eyebrow">APPAREL INVENTORY</p><h1>مرحبًا بعودتك</h1><p className="muted">سجّل الدخول لإدارة المخزون والمبيعات</p><label>اسم المستخدم أو البريد<input name="identifier" autoComplete="off" required /></label><label>كلمة المرور<input name="access-code" type="password" autoComplete="new-password" required /></label>{message && <div className="notice error">{message}</div>}<button className="primary full" disabled={busy}>{busy ? 'جارٍ الدخول…' : 'تسجيل الدخول'} <span>←</span></button></form></main>;
 
   if (!can('productsRead') && user.role !== 'admin') return <main className="login-shell"><section className="login-card"><div className="brand-mark">!</div><h1>لا توجد صلاحية</h1><p className="muted">اطلب من مدير النظام منح حسابك صلاحية مناسبة.</p><button className="ghost" onClick={() => { localStorage.removeItem('apparel_token'); setToken(''); }}>تسجيل الخروج</button></section></main>;
 
