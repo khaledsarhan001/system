@@ -1,4 +1,17 @@
-name = "systeam"
-main = "server.js"
-compatibility_date = "2024-01-01"
-compatibility_flags = [ "nodejs_compat" ]
+name = "apparel-inventory"
+main = "worker/index.ts"
+compatibility_date = "2026-10-18"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+[vars]
+MONGODB_DATABASE = "apparel_inventory"
+MONGODB_DATASOURCE = "Cluster0"
+
+# Set secrets with `npx wrangler secret put JWT_SECRET` and
+# `npx wrangler secret put MONGODB_DATA_API_KEY`.
+# Set MONGODB_DATA_API_URL as a secret/var to a Data API-compatible HTTP endpoint.

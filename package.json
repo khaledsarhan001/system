@@ -2,11 +2,15 @@
   "name": "apparel-inventory-api",
   "version": "1.0.0",
   "description": "Scalable Apparel Inventory Management System with RBAC",
-  "main": "server.js",
+  "main": "worker/index.ts",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "seed": "node src/utils/seed.js"
+    "seed": "node src/utils/seed.js",
+    "dev:worker": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "setup:admin": "node --env-file=.env scripts/setup-admin.mjs",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -21,9 +25,16 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.6.0",
     "morgan": "^1.10.0",
-    "nedb": "^1.8.0"
+    "nedb": "^1.8.0",
+    "hono": "^4.10.0",
+    "html5-qrcode": "^2.3.8",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.4"
+    "nodemon": "^3.1.4",
+    "@vitejs/plugin-react": "^5.0.4",
+    "vite": "^7.1.7",
+    "wrangler": "^4.40.3"
   }
 }

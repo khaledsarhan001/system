@@ -39,6 +39,13 @@ const userSchema = new mongoose.Schema(
       },
       default: 'employee',
     },
+    permissions: {
+      productsRead: { type: Boolean, default: true },
+      productsWrite: { type: Boolean, default: false },
+      salesCreate: { type: Boolean, default: true },
+      employeesRead: { type: Boolean, default: false },
+      analyticsRead: { type: Boolean, default: false },
+    },
     phone: {
       type: String,
       default: '',
