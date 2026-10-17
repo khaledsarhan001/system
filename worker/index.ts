@@ -89,6 +89,20 @@ app.post('/api/auth/login', async (c) => {
 
 app.get('/api/auth/me', (c) => c.json({ success: true, data: cleanUser(c.get('user')) }));
 
+app.post('/api/admin/factory-reset', async (c) => {
+  const user = c.get('user');
+  if (user.role !== 'admin') return c.json({ success: false, message: 'مدير النظام فقط يمكنه تنفيذ إعادة ضبط المصنع.' }, 403);
+  const body = await c.req.json<{ password?: string }>();
+  if (!body.password || !await verifyPassword(body.password, user.passwordSalt, user.passwordHash)) {
+    return c.json({ success: false, message: 'كلمة مرور المدير غير صحيحة.' }, 401);
+  }
+  await c.env.DB.batch([
+    c.env.DB.prepare('DELETE FROM transactions'),
+    c.env.DB.prepare('DELETE FROM products'),
+  ]);
+  return c.json({ success: true, message: 'Inventory and transaction data cleared.' });
+});
+
 app.get('/api/products', requirePermission('productsRead'), async (c) => {
   const search = c.req.query('search')?.trim();
   return c.json({ success: true, data: await new D1Repository(c.env.DB).listProducts(search) });
