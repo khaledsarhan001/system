@@ -258,6 +258,7 @@ function validateProduct(value: Record<string, unknown>, partial = false): strin
   if (value.sku !== undefined && (typeof value.sku !== 'string' || !/^[A-Za-z0-9-]+$/.test(value.sku.trim()))) return 'SKU may contain letters, numbers and hyphens.';
   if (value.category !== undefined && !['Men', 'Women', 'Kids'].includes(String(value.category))) return 'Category must be Men, Women or Kids.';
   if (value.productType !== undefined && (typeof value.productType !== 'string' || value.productType.length > 80)) return 'Product type must be 80 characters or fewer.';
+  if (value.imageUrl !== undefined && (typeof value.imageUrl !== 'string' || value.imageUrl.length > 1500000 || (value.imageUrl && !/^https:\/\//i.test(value.imageUrl) && !/^data:image\/(png|jpeg|webp);base64,/i.test(value.imageUrl)))) return 'Product image must be a secure image URL or PNG/JPEG/WebP upload under 1.5 MB.';
   if (value.retailPrice !== undefined && (!Number.isFinite(Number(value.retailPrice)) || Number(value.retailPrice) < 0)) return 'Price must be zero or greater.';
   if (value.costPrice !== undefined && (!Number.isFinite(Number(value.costPrice)) || Number(value.costPrice) < 0)) return 'Cost price must be zero or greater.';
   if (value.quantity !== undefined && (!Number.isInteger(Number(value.quantity)) || Number(value.quantity) < 0)) return 'Quantity must be a non-negative integer.';
@@ -270,6 +271,7 @@ function normalizeProduct(value: Record<string, any>): any {
   if (typeof result.sku === 'string') result.sku = result.sku.trim().toUpperCase();
   if (typeof result.name === 'string') result.name = result.name.trim();
   if (typeof result.productType === 'string') result.productType = result.productType.trim() || 'general';
+  if (typeof result.imageUrl === 'string') result.imageUrl = result.imageUrl.trim();
   if (Array.isArray(result.colors)) result.colors = [...new Set(result.colors.map((x: string) => x.trim()).filter(Boolean))];
   if (result.retailPrice !== undefined) result.retailPrice = Number(result.retailPrice);
   if (result.quantity !== undefined) result.quantity = Number(result.quantity);

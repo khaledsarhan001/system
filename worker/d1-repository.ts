@@ -2,7 +2,7 @@ import type { Permission, User } from './types';
 
 export type Product = {
   id: string; name: string; sku: string; category: 'Men' | 'Women' | 'Kids'; productType: string;
-  retailPrice: number; costPrice: number; quantity: number; colors: string[]; isActive: boolean;
+  retailPrice: number; costPrice: number; quantity: number; colors: string[]; imageUrl?: string; isActive: boolean;
   createdAt: string; updatedAt: string;
 };
 
@@ -15,7 +15,7 @@ type UserRow = {
 
 type ProductRow = {
   id: string; name: string; sku: string; category: Product['category']; retail_price: number; cost_price: number;
-  quantity: number; colors_json: string; product_type: string; is_active: number; created_at: string; updated_at: string;
+  quantity: number; colors_json: string; product_type: string; image_url: string; is_active: number; created_at: string; updated_at: string;
 };
 
 const permissionDefaults: Record<Permission, boolean> = {
@@ -39,7 +39,7 @@ function decodeProduct(row: ProductRow): Product {
   return {
     id: row.id, name: row.name, sku: row.sku, category: row.category, productType: row.product_type ?? 'general',
     retailPrice: row.retail_price, costPrice: row.cost_price ?? 0, quantity: row.quantity, colors,
-    isActive: row.is_active === 1, createdAt: row.created_at, updatedAt: row.updated_at,
+    imageUrl: row.image_url ?? '', isActive: row.is_active === 1, createdAt: row.created_at, updatedAt: row.updated_at,
   };
 }
 
@@ -79,10 +79,10 @@ export class D1Repository {
   async createProduct(product: Omit<Product, 'createdAt' | 'updatedAt' | 'isActive'>) {
     const now = new Date().toISOString();
     await this.db.prepare(`INSERT INTO products
-      (id,name,sku,category,product_type,retail_price,cost_price,quantity,colors_json,is_active,created_at,updated_at)
-      VALUES (?,?,?,?,?,?,?,?,?,1,?,?)`)
+      (id,name,sku,category,product_type,retail_price,cost_price,quantity,colors_json,image_url,is_active,created_at,updated_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,1,?,?)`)
       .bind(product.id, product.name, product.sku, product.category, product.productType ?? 'general', product.retailPrice,
-        product.costPrice ?? 0, product.quantity, JSON.stringify(product.colors), now, now).run();
+        product.costPrice ?? 0, product.quantity, JSON.stringify(product.colors), product.imageUrl ?? '', now, now).run();
     return { ...product, isActive: true, createdAt: now, updatedAt: now };
   }
 
@@ -91,6 +91,7 @@ export class D1Repository {
       ['name', 'name', (v) => v], ['sku', 'sku', (v) => v], ['category', 'category', (v) => v], ['productType', 'product_type', (v) => v],
       ['retailPrice', 'retail_price', Number], ['costPrice', 'cost_price', Number], ['quantity', 'quantity', Number],
       ['colors', 'colors_json', JSON.stringify],
+      ['imageUrl', 'image_url', (v) => v],
     ];
     const sets: string[] = [];
     const values: unknown[] = [];
