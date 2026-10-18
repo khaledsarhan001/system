@@ -178,19 +178,41 @@ export class D1Repository {
         FROM transactions AS t, json_each(t.items_json) AS item WHERE t.type = 'sale') AS cogs,
       (SELECT COUNT(*) FROM transactions WHERE type = 'return') AS returnsCount,
       (SELECT COALESCE(SUM(total_amount),0) FROM transactions WHERE type = 'return') AS returnsValue,
-      (SELECT COALESCE(SUM(quantity * cost_price),0) FROM products WHERE is_active = 1) AS inventoryCost
-    `).first<{ products: number; unitsInStock: number; lowStock: number; salesCount: number; revenue: number; cogs: number; returnsCount: number; returnsValue: number; inventoryCost: number }>();
-    const [daily, popular] = await Promise.all([
+      (SELECT COALESCE(SUM(quantity * cost_price),0) FROM products WHERE is_active = 1) AS inventoryCost,
+      (SELECT COALESCE(SUM(quantity * retail_price),0) FROM products WHERE is_active = 1) AS inventoryRetail,
+      (SELECT COALESCE(SUM((CASE WHEN t.type='sale' THEN 1 ELSE -1 END) *
+        (json_extract(item.value,'$.unitPrice') - json_extract(item.value,'$.costPriceAtSale')) * json_extract(item.value,'$.quantity')),0)
+        FROM transactions t, json_each(t.items_json) item) AS netProfit,
+      (SELECT COUNT(*) FROM transactions WHERE type='sale') AS transactionCount
+    `).first<{ products: number; unitsInStock: number; lowStock: number; salesCount: number; revenue: number; cogs: number; returnsCount: number; returnsValue: number; inventoryCost: number; inventoryRetail: number; netProfit: number; transactionCount: number }>();
+    const [daily, popular, categories, lowStockProducts, employeePerformance, returnReasons] = await Promise.all([
       this.db.prepare(`SELECT date(created_at) AS day, COALESCE(SUM(CASE WHEN type='sale' THEN total_amount ELSE -total_amount END),0) AS revenue,
         SUM(CASE WHEN type='sale' THEN 1 ELSE 0 END) AS salesCount
         FROM transactions WHERE date(created_at) >= date('now','-6 days')
         GROUP BY date(created_at) ORDER BY day`).all<{ day: string; revenue: number; salesCount: number }>(),
       this.db.prepare(`SELECT json_extract(item.value,'$.productName') AS name,
-        SUM(json_extract(item.value,'$.quantity')) AS quantity
+        SUM(json_extract(item.value,'$.quantity')) AS quantity,
+        SUM(json_extract(item.value,'$.unitPrice') * json_extract(item.value,'$.quantity')) AS revenue
         FROM transactions t, json_each(t.items_json) item WHERE t.type='sale'
         GROUP BY name ORDER BY quantity DESC LIMIT 5`).all<{ name: string; quantity: number }>(),
+      this.db.prepare(`SELECT category, COUNT(*) AS products, SUM(quantity) AS units,
+        SUM(quantity * cost_price) AS costValue, SUM(quantity * retail_price) AS retailValue
+        FROM products WHERE is_active=1 GROUP BY category ORDER BY category`).all<any>(),
+      this.db.prepare(`SELECT id, name, sku, category, quantity, retail_price AS retailPrice
+        FROM products WHERE is_active=1 AND quantity < 5 ORDER BY quantity ASC, name LIMIT 20`).all<any>(),
+      this.db.prepare(`SELECT COALESCE(NULLIF(t.employee_name_snapshot,''),u.name,'') AS name,
+        COUNT(DISTINCT CASE WHEN t.type='sale' THEN t.id END) AS salesCount,
+        COUNT(DISTINCT CASE WHEN t.type='return' THEN t.id END) AS returnsCount,
+        SUM(CASE WHEN t.type='sale' THEN json_extract(item.value,'$.unitPrice') * json_extract(item.value,'$.quantity') ELSE 0 END) AS revenue,
+        SUM((CASE WHEN t.type='sale' THEN 1 ELSE -1 END) *
+          (json_extract(item.value,'$.unitPrice') - json_extract(item.value,'$.costPriceAtSale')) * json_extract(item.value,'$.quantity')) AS profit
+        FROM transactions t LEFT JOIN users u ON u.id=t.employee_id, json_each(t.items_json) item
+        GROUP BY t.employee_id,name ORDER BY revenue DESC LIMIT 30`).all<any>(),
+      this.db.prepare(`SELECT COALESCE(NULLIF(return_reason,''),'غير محدد') AS reason,
+        COUNT(*) AS count, SUM(total_amount) AS value FROM transactions WHERE type='return'
+        GROUP BY reason ORDER BY count DESC LIMIT 10`).all<any>(),
     ]);
-    return { ...row, dailySales: daily.results ?? [], topProducts: popular.results ?? [] };
+    return { ...row, dailySales: daily.results ?? [], topProducts: popular.results ?? [], categories: categories.results ?? [], lowStockProducts: lowStockProducts.results ?? [], employeePerformance: employeePerformance.results ?? [], returnReasons: returnReasons.results ?? [] };
   }
 
   async profitTimeline(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
