@@ -152,6 +152,17 @@ export class D1Repository {
     } catch { throw new Error('Username or email is already in use.'); }
   }
 
+  async updateAdminCredentials(id: string, username: string, credentials?: { passwordHash: string; passwordSalt: string }) {
+    try {
+      const result = credentials
+        ? await this.db.prepare("UPDATE users SET username=?,password_hash=?,password_salt=?,updated_at=? WHERE id=? AND role='admin'")
+          .bind(username, credentials.passwordHash, credentials.passwordSalt, new Date().toISOString(), id).run()
+        : await this.db.prepare("UPDATE users SET username=?,updated_at=? WHERE id=? AND role='admin'")
+          .bind(username, new Date().toISOString(), id).run();
+      return result.meta.changes ? this.getUserById(id) : null;
+    } catch { throw new Error('اسم المستخدم مستخدم بالفعل. اختَر اسمًا آخر.'); }
+  }
+
   async removeEmployee(id: string) {
     const existing = await this.db.prepare("SELECT id FROM users WHERE id=? AND role='employee'").bind(id).first<{id:string}>();
     if (!existing) return null;

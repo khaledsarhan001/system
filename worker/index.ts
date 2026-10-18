@@ -89,6 +89,33 @@ app.post('/api/auth/login', async (c) => {
 
 app.get('/api/auth/me', (c) => c.json({ success: true, data: cleanUser(c.get('user')) }));
 
+app.put('/api/admin/credentials', async (c) => {
+  const user = c.get('user');
+  if (user.role !== 'admin') return c.json({ success: false, message: 'هذه العملية متاحة لمدير النظام فقط.' }, 403);
+  const body = await c.req.json<{ currentPassword?: string; username?: string; newPassword?: string }>();
+  if (!body.currentPassword || !await verifyPassword(body.currentPassword, user.passwordSalt, user.passwordHash)) {
+    return c.json({ success: false, message: 'كلمة المرور الحالية غير صحيحة.' }, 401);
+  }
+  const username = body.username?.trim().toLowerCase();
+  if (username !== undefined && !/^[a-z0-9._-]{3,40}$/.test(username)) {
+    return c.json({ success: false, message: 'اسم المستخدم يجب أن يكون 3 إلى 40 حرفًا إنجليزيًا أو رقمًا، ويمكن استخدام النقطة والشرطة.' }, 400);
+  }
+  if (body.newPassword !== undefined && body.newPassword.length < 8) {
+    return c.json({ success: false, message: 'كلمة المرور الجديدة يجب ألا تقل عن 8 أحرف.' }, 400);
+  }
+  if (username === undefined && body.newPassword === undefined) {
+    return c.json({ success: false, message: 'أدخل اسم مستخدم جديدًا أو كلمة مرور جديدة.' }, 400);
+  }
+  const credentials = body.newPassword ? await hashPassword(body.newPassword) : undefined;
+  try {
+    const updated = await new D1Repository(c.env.DB).updateAdminCredentials(user.id, username ?? user.username, credentials);
+    if (!updated) return c.json({ success: false, message: 'تعذر تحديث بيانات المدير.' }, 404);
+    return c.json({ success: true, data: cleanUser(updated), message: 'تم تحديث بيانات دخول المدير.' });
+  } catch (error) {
+    return c.json({ success: false, message: error instanceof Error ? error.message : 'تعذر تحديث بيانات الدخول.' }, 409);
+  }
+});
+
 app.post('/api/employees/heartbeat', async (c) => {
   const user = c.get('user');
   const lastActiveAt = await new D1Repository(c.env.DB).markUserActive(user.id);
