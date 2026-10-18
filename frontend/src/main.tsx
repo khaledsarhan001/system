@@ -5,6 +5,50 @@ import './style.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
+const englishUiText: Record<string, string> = {
+  'مخزون': 'Apparel', 'مدير النظام': 'Administrator', 'موظف': 'Employee', 'ج.م': 'EGP',
+  'خطوة ١ / ٣': 'STEP 1 / 3', 'خطوة ٢ / ٣': 'STEP 2 / 3', 'خطوة ٣ / ٣': 'STEP 3 / 3',
+  'وجّه الكاميرا إلى QR أو الباركود لإضافته للسلة تلقائيًا.': 'Point the camera at a QR code or barcode to add the product to the cart.',
+  'إيقاف الكاميرا': 'Stop camera', 'تشغيل ماسح الكاميرا': 'Start camera scanner', 'أدخل SKU يدويًا': 'Enter SKU manually', 'إضافة': 'Add',
+  'أصناف': 'items', 'امسح منتجًا لبدء البيع': 'Scan a product to start a sale', 'جارٍ التسجيل…': 'Submitting…', 'تأكيد البيع': 'Complete sale',
+  'استلام وإعادة للمخزون': 'Receive and restock', 'اختر المنتج والكمية، وسيتم تحديث المخزون وتسجيل العملية.': 'Choose a product and quantity. Inventory will be updated and the return recorded.',
+  'المنتج': 'Product', 'اختر المنتج': 'Select a product', 'الكمية': 'Quantity', 'سبب الإرجاع': 'Return reason', 'اختياري': 'Optional', 'تأكيد المرتجع': 'Confirm return',
+  'إعادة تفعيل': 'Reactivate', 'إيقاف': 'Suspend', 'تسجيل الخروج': 'Sign out',
+  'إدارة البيانات': 'Data management', 'النسخ الاحتياطي والاستعادة': 'Backup and restore', 'النسخ التلقائي': 'Automatic backup', 'كل ٦ ساعات': 'Every 6 hours', 'يوميًا': 'Daily', 'أسبوعيًا': 'Weekly', 'يدوي': 'Manual',
+  'تُحفظ نسخة تلقائية محليًا في هذا المتصفح.': 'Automatic backups are stored locally in this browser.', 'تنزيل نسخة JSON': 'Download JSON backup', 'استعادة من ملف': 'Restore from file',
+  'إجراء إداري': 'Administrative action', 'إعادة ضبط المصنع': 'Factory reset', 'سيتم حذف المنتجات وسجل المبيعات والمرتجعات نهائيًا. ستظل حسابات المستخدمين محفوظة.': 'Products, sales, and returns will be permanently deleted. User accounts will remain.',
+  'كلمة مرور المدير الحالية': 'Current administrator password', 'اكتب RESET للتأكيد': 'Type RESET to confirm', 'إلغاء': 'Cancel', 'جارٍ الحذف…': 'Deleting…', 'مسح بيانات النظام': 'Clear system data',
+  'إدارة المخزون': 'Inventory management', 'إضافة منتج': 'Add product', 'تعديل المنتج': 'Edit product', 'صورة المنتج: رابط أو رفع': 'Product image: URL or upload', 'أو ارفع صورة من جهازك': 'Or upload an image from your device', 'معاينة صورة المنتج': 'Product image preview', 'إزالة الصورة': 'Remove image',
+  'اسم المنتج': 'Product name', 'رمز SKU': 'SKU', 'الفئة': 'Category', 'رجالي': 'Men', 'نسائي': 'Women', 'أطفال': 'Kids', 'نوع القطعة (اختياري)': 'Product type (optional)', 'قمصان، بنطلونات، فساتين…': 'Shirts, trousers, dresses…',
+  'سعر البيع (ج.م)': 'Sale price (EGP)', 'سعر التكلفة (ج.م)': 'Cost price (EGP)', 'الألوان المخصصة': 'Custom colors', 'افصل بين الألوان بفاصلة': 'Separate colors with commas', 'أسود، زيتي، بنفسجي': 'Black, olive, purple', 'حفظ المنتج': 'Save product', 'جارٍ الحفظ…': 'Saving…',
+  'إدارة الفريق': 'Team management', 'إضافة موظف': 'Add employee', 'تعديل بيانات الموظف': 'Edit employee details', 'الاسم': 'Name', 'اسم المستخدم': 'Username', 'البريد الإلكتروني': 'Email address', 'كلمة المرور المؤقتة': 'Temporary password', 'الهاتف': 'Phone', 'الفرع': 'Branch', 'المسمى الوظيفي': 'Job title', 'جارٍ الإنشاء…': 'Creating…', 'إنشاء الحساب': 'Create account', 'حفظ البيانات': 'Save details',
+  'مثال: TSH-001': 'Example: TSH-001', '٨ أحرف على الأقل': 'At least 8 characters', 'قطعة': 'units',
+  'تمت إضافة المنتج': 'Product added', 'تم تحديث المنتج': 'Product updated', 'تم تسجيل البيع بنجاح': 'Sale completed successfully', 'تم تسجيل المرتجع وإضافة الكمية إلى المخزون.': 'Return recorded and stock updated.',
+  'لا توجد منتجات لعرضها': 'No products to display', 'لا توجد نتائج مطابقة. غيّر البحث أو خيارات التصفية.': 'No matching results. Change your search or filters.', 'لا توجد معاملات حتى الآن': 'No transactions yet', 'لا يوجد موظفون حتى الآن': 'No employees yet',
+  'تعذر تحميل بيانات الأرباح.': 'Could not load profit data.', 'تعذر تسجيل الدخول': 'Could not sign in', 'تعذر حفظ المنتج': 'Could not save product', 'تعذر حذف المنتج': 'Could not delete product', 'تعذر تشغيل الكاميرا': 'Could not start the camera', 'تعذر إتمام البيع': 'Could not complete the sale', 'تعذر تسجيل المرتجع': 'Could not record the return', 'تعذرت إضافة الموظف': 'Could not add employee', 'تعذر تحديث الموظف': 'Could not update employee', 'تعذر تحديث بيانات الدخول.': 'Could not update sign-in details.', 'تعذر تحديث حالة الحساب': 'Could not update account status', 'تعذر حذف الحساب': 'Could not delete account', 'تعذر حفظ الصلاحيات': 'Could not save permissions', 'تعذرت إعادة الضبط': 'Could not reset the system', 'ملف النسخة الاحتياطية غير صالح.': 'Invalid backup file.', 'تعذرت استعادة النسخة.': 'Could not restore the backup.',
+};
+
+function localizeStaticText(node: React.ReactNode, language: string): React.ReactNode {
+  if (language !== 'en') return node;
+  if (typeof node === 'string') {
+    const trimmed = node.trim();
+    const translated = englishUiText[trimmed];
+    return translated ? node.replace(trimmed, translated) : node;
+  }
+  if (Array.isArray(node)) return node.map((child) => localizeStaticText(child, language));
+  if (React.isValidElement(node)) {
+    const props = node.props as { children?: React.ReactNode; [key: string]: unknown };
+    const textProps = ['placeholder', 'title', 'aria-label', 'alt'] as const;
+    const translatedProps: Record<string, unknown> = {};
+    for (const key of textProps) {
+      const value = props[key];
+      if (typeof value === 'string' && englishUiText[value]) translatedProps[key] = englishUiText[value];
+    }
+    return React.cloneElement(node, translatedProps, localizeStaticText(props.children, language));
+  }
+  return node;
+}
+
 class ApiError extends Error {
   constructor(message: string, readonly status: number) { super(message); this.name = 'ApiError'; }
 }
@@ -468,7 +512,7 @@ function App() {
 
   if (!can('productsRead') && user.role !== 'admin') return <main className="login-shell"><section className="login-card"><div className="brand-mark">!</div><h1>لا توجد صلاحية</h1><p className="muted">اطلب من مدير النظام منح حسابك صلاحية مناسبة.</p><button className="ghost" onClick={() => { localStorage.removeItem('apparel_token'); setToken(''); }}>تسجيل الخروج</button></section></main>;
 
-  return <div className="app-shell">
+  return localizeStaticText(<div className="app-shell">
     <aside className="sidebar"><div className="brand"><div className="brand-mark">👕</div><div><b>مخزون</b><small>{language === 'ar' ? 'نظام إدارة الملابس' : 'Clothing Management System'}</small></div></div><div className="side-label">{language === 'ar' ? 'مساحة العمل' : 'Workspace'}</div>
       {(user.role === 'admin' || can('analyticsRead')) && <button className={`nav-item secondary-nav ${tab === 'analytics' ? 'active' : ''}`} onClick={() => { setTab('analytics'); setAnalyticsTab('overview'); }}><span>▤</span> {language === 'ar' ? 'تحليل المبيعات والأرباح' : 'Sales & Profit Analysis'}</button>}
       <button className={tab === 'products' ? 'nav-item active' : 'nav-item'} onClick={() => setTab('products')}><span>▦</span> {language === 'ar' ? 'المنتجات' : 'Products'}</button>
@@ -502,7 +546,7 @@ function App() {
     {editing && <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) setEditing(null); }}><form className="modal card" onSubmit={saveProduct}><div className="modal-heading"><div><span className="eyebrow">إدارة المخزون</span><h2>{editing === 'new' ? 'إضافة منتج' : 'تعديل المنتج'}</h2></div><button type="button" className="close" onClick={() => setEditing(null)}>×</button></div><label>صورة المنتج: رابط أو رفع<input name="imageUrl" type="url" dir="ltr" value={productImage.startsWith("data:") ? "" : productImage} onChange={(e) => setProductImage(e.target.value)} placeholder="https://..." /></label><label className="image-upload-label">أو ارفع صورة من جهازك<input type="file" accept="image/*" onChange={(e) => uploadProductImage(e.target.files?.[0])} /></label>{productImage && <div className="image-preview-wrap"><img className="image-preview" src={productImage} alt="معاينة صورة المنتج" /><button type="button" className="ghost" onClick={() => setProductImage('')}>إزالة الصورة</button></div>}<label>اسم المنتج<input name="name" defaultValue={editing === 'new' ? '' : editing.name} required maxLength={150} /></label><div className="form-row"><label>رمز SKU<input name="sku" defaultValue={editing === 'new' ? '' : editing.sku} required pattern="[A-Za-z0-9-]+" /></label><label>الفئة<select name="category" defaultValue={editing === 'new' ? 'Men' : editing.category}><option value="Men">رجالي</option><option value="Women">نسائي</option><option value="Kids">أطفال</option></select></label></div><label>نوع القطعة (اختياري)<input name="productType" defaultValue={editing === 'new' ? '' : (editing as Product).productType ?? ''} placeholder="قمصان، بنطلونات، فساتين…" /></label><div className="form-row"><label>سعر البيع (ج.م)<input name="retailPrice" type="number" min="0" step="0.01" defaultValue={editing === 'new' ? '' : (editing as Product).retailPrice} required /></label><label>سعر التكلفة (ج.م)<input name="costPrice" type="number" min="0" step="0.01" defaultValue={editing === 'new' ? 0 : (editing as Product).costPrice ?? 0} required /></label></div><label>الكمية<input name="quantity" type="number" min="0" step="1" defaultValue={editing === 'new' ? 0 : (editing as Product).quantity} required /></label><label>الألوان المخصصة <small className="muted">افصل بين الألوان بفاصلة</small><input name="colors" placeholder="أسود، زيتي، بنفسجي" defaultValue={editing === 'new' ? '' : (editing as Product).colors.join(', ')} required /></label><div className="modal-actions"><button type="button" className="ghost" onClick={() => setEditing(null)}>إلغاء</button><button className="primary" disabled={busy}>{busy ? 'جارٍ الحفظ…' : 'حفظ المنتج'}</button></div></form></div>}
     {newEmployee && <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) setNewEmployee(false); }}><form className="modal card" onSubmit={createEmployee}><div className="modal-heading"><div><span className="eyebrow">إدارة الفريق</span><h2>إضافة موظف</h2></div><button type="button" className="close" onClick={() => setNewEmployee(false)}>×</button></div><label>الاسم<input name="name" required /></label><div className="form-row"><label>اسم المستخدم<input name="username" pattern="[a-zA-Z0-9._-]{3,40}" required /></label><label>البريد الإلكتروني<input name="email" type="email" required /></label></div><label>كلمة المرور المؤقتة<input name="password" type="password" minLength={8} required /></label><div className="form-row"><label>الهاتف<input name="phone" /></label><label>الفرع<input name="branch" /></label></div><label>المسمى الوظيفي<input name="jobTitle" /></label><div className="modal-actions"><button type="button" className="ghost" onClick={() => setNewEmployee(false)}>إلغاء</button><button className="primary" disabled={busy}>{busy ? 'جارٍ الإنشاء…' : 'إنشاء الحساب'}</button></div></form></div>}
     {editingEmployee && <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) setEditingEmployee(null); }}><form className="modal card" onSubmit={updateEmployee}><div className="modal-heading"><div><span className="eyebrow">إدارة الفريق</span><h2>تعديل بيانات الموظف</h2></div><button type="button" className="close" onClick={() => setEditingEmployee(null)}>×</button></div><label>الاسم<input name="name" defaultValue={editingEmployee.name} required /></label><div className="form-row"><label>اسم المستخدم<input name="username" defaultValue={editingEmployee.username} required /></label><label>البريد الإلكتروني<input name="email" type="email" defaultValue={editingEmployee.email} required /></label></div><div className="form-row"><label>الهاتف<input name="phone" defaultValue={editingEmployee.phone} /></label><label>الفرع<input name="branch" defaultValue={editingEmployee.branch} /></label></div><label>المسمى الوظيفي<input name="jobTitle" defaultValue={editingEmployee.jobTitle} /></label><div className="modal-actions"><button type="button" className="ghost" onClick={() => setEditingEmployee(null)}>إلغاء</button><button className="primary" disabled={busy}>{busy ? 'جارٍ الحفظ…' : 'حفظ البيانات'}</button></div></form></div>}
-  </div>;
+  </div>, language);
 }
 
 function ProfitDashboard({ data, period, setPeriod, loading, language }: { data: ProfitPoint[]; period: ProfitPeriod; setPeriod: (period: ProfitPeriod) => void; loading: boolean; language: string }) {
