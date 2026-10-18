@@ -112,8 +112,11 @@ function App() {
 
   useEffect(() => { if (user) localStorage.setItem('apparel_user_v1', JSON.stringify(user)); }, [user]);
   useEffect(() => {
+    let syncing = false;
     const sync = async () => {
-      if (!navigator.onLine) return;
+      if (!navigator.onLine || syncing) return;
+      syncing = true;
+      try {
       const queue = JSON.parse(localStorage.getItem('apparel_offline_queue_v1') || '[]') as { id: string; path: string; method: string; body: string; tempId?: string }[];
       const remap = JSON.parse(localStorage.getItem('apparel_offline_id_map_v1') || '{}') as Record<string, string>;
       let changed = false;
@@ -139,8 +142,12 @@ function App() {
         } catch { break; }
       }
       if (changed) { localStorage.removeItem('apparel_offline_id_map_v1'); loadProducts().catch(() => undefined); loadTransactions().catch(() => undefined); loadAnalytics().catch(() => undefined); }
+      } finally { syncing = false; }
     };
-    window.addEventListener('online', sync); sync(); return () => window.removeEventListener('online', sync);
+    const onVisible = () => { if (document.visibilityState === 'visible') sync(); };
+    const retry = window.setInterval(sync, 15000);
+    window.addEventListener('online', sync); document.addEventListener('visibilitychange', onVisible); sync();
+    return () => { window.clearInterval(retry); window.removeEventListener('online', sync); document.removeEventListener('visibilitychange', onVisible); };
   }, [token]);
 
   useEffect(() => { localStorage.setItem('apparel_backup_interval_v1', backupInterval); if (backupInterval === 'manual') return; const ms = backupInterval === '6h' ? 6 * 3600000 : backupInterval === 'daily' ? 86400000 : 7 * 86400000; const save = () => { const last = Number(localStorage.getItem('apparel_backup_at_v1') || 0); if (Date.now() - last < ms) return; localStorage.setItem('apparel_auto_backup_latest_v1', JSON.stringify({ version: 1, createdAt: new Date().toISOString(), products: JSON.parse(localStorage.getItem('apparel_cached_products_v1') || '[]'), transactions })); localStorage.setItem('apparel_backup_at_v1', String(Date.now())); }; save(); const id = window.setInterval(save, 60000); return () => clearInterval(id); }, [backupInterval, transactions]);

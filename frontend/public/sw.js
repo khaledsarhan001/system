@@ -2,7 +2,12 @@ const VERSION = 'apparel-shell-v1';
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(VERSION);
-    await cache.add(new Request(self.registration.scope, { cache: 'reload' }));
+    const shell = await fetch(self.registration.scope, { cache: 'reload' });
+    if (!shell.ok) throw new Error('App shell could not be cached');
+    await cache.put(self.registration.scope, shell.clone());
+    const html = await shell.text();
+    const assets = [...html.matchAll(/(?:src|href)=["']([^"']+\.(?:js|css)(?:\?[^"']*)?)["']/g)].map((match) => new URL(match[1], self.registration.scope));
+    await Promise.all(assets.map(async (url) => { const response = await fetch(url, { cache: 'reload' }); if (response.ok) await cache.put(url.href, response); }));
     await self.skipWaiting();
   })());
 });
@@ -41,4 +46,3 @@ self.addEventListener('fetch', (event) => {
     })());
   }
 });
-
