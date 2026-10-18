@@ -200,6 +200,15 @@ app.get('/api/analytics', requirePermission('analyticsRead'), async (c) => {
   return c.json({ success: true, data: await new D1Repository(c.env.DB).analytics() });
 });
 
+app.get('/api/analytics/profits', requirePermission('analyticsRead'), async (c) => {
+  const period = c.req.query('period') ?? 'monthly';
+  if (!['daily', 'weekly', 'monthly', 'yearly'].includes(period)) {
+    return c.json({ success: false, message: 'الفترة المطلوبة غير صالحة.' }, 400);
+  }
+  const data = await new D1Repository(c.env.DB).profitTimeline(period as 'daily' | 'weekly' | 'monthly' | 'yearly');
+  return c.json({ success: true, data });
+});
+
 app.get('/api/transactions', requirePermission('analyticsRead'), async (c) => {
   return c.json({ success: true, data: await new D1Repository(c.env.DB).listTransactions() });
 });

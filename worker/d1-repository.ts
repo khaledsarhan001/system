@@ -193,6 +193,25 @@ export class D1Repository {
     return { ...row, dailySales: daily.results ?? [], topProducts: popular.results ?? [] };
   }
 
+  async profitTimeline(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
+    const config = {
+      daily: { bucket: "%Y-%m-%dT%H:00:00", since: '-24 hours' },
+      weekly: { bucket: '%Y-%m-%d', since: '-6 days' },
+      monthly: { bucket: '%Y-%m-%d', since: '-29 days' },
+      yearly: { bucket: '%Y-%m', since: '-11 months' },
+    }[period];
+    const result = await this.db.prepare(`SELECT strftime(?, t.created_at) AS period,
+      COALESCE(SUM(CASE WHEN t.type='sale' THEN json_extract(item.value,'$.unitPrice') * json_extract(item.value,'$.quantity') ELSE 0 END),0) AS revenue,
+      COALESCE(SUM((CASE WHEN t.type='sale' THEN 1 ELSE -1 END) *
+        (json_extract(item.value,'$.unitPrice') - json_extract(item.value,'$.costPriceAtSale')) * json_extract(item.value,'$.quantity')),0) AS profit,
+      COUNT(DISTINCT CASE WHEN t.type='sale' THEN t.id END) AS salesCount,
+      COUNT(DISTINCT CASE WHEN t.type='return' THEN t.id END) AS returnsCount
+      FROM transactions t, json_each(t.items_json) item
+      WHERE t.created_at >= datetime('now', ?) GROUP BY period ORDER BY period`)
+      .bind(config.bucket, config.since).all<{ period: string; revenue: number; profit: number; salesCount: number; returnsCount: number }>();
+    return result.results ?? [];
+  }
+
   async listTransactions() {
     const rows = await this.db.prepare(`SELECT t.*, u.name AS employee_name FROM transactions t
       LEFT JOIN users u ON u.id=t.employee_id ORDER BY t.created_at DESC LIMIT 500`).all<any>();
