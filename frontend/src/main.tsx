@@ -441,27 +441,10 @@ function App() {
   </div>;
 }
 
-function clothingKind(product: Product) {
-  const text = `${product.name} ${product.productType || ''}`.toLocaleLowerCase();
-  if (/\b(bag|purse|handbag|backpack)\b|حقيبة|شنطة|اكسسوار/.test(text)) return 'bag';
-  if (/\b(dress|gown|skirt)\b|فستان|تنورة/.test(text) || product.category === 'Women') return 'dress';
-  if (/\b(coat|jacket|hoodie|blazer|outerwear)\b|معطف|جاكيت|جاكت|هودي|بليزر/.test(text) || product.category === 'Kids') return 'coat';
-  if (/\b(pants|trousers|jeans|joggers)\b|بنطلون|سروال|جينز/.test(text) || product.category === 'Men') return 'pants';
-  return 'coat';
-}
-
 function ProductArtwork({ product }: { product: Product }) {
   const [failed, setFailed] = useState(false);
   if (product.imageUrl && !failed) return <img className="product-image" src={product.imageUrl} alt={product.name} loading="lazy" onError={() => setFailed(true)} />;
-  const kind = clothingKind(product);
-  return <div className={`clothing-fallback ${kind}`} role="img" aria-label={product.name}>
-    <svg viewBox="0 0 100 100" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-      {kind === 'pants' && <><path d="M29 17h42l-3 26-5 43H48l2-37-5 37H29l-3-43z"/><path d="M29 25h42M50 18v30"/></>}
-      {kind === 'dress' && <><path d="M39 17h22l4 17 10 8-8 8 13 34H20l13-34-8-8 10-8z"/><path d="M39 34h22M32 52h36"/></>}
-      {kind === 'coat' && <><path d="M37 17 25 25 16 47l13 6-4 31h50l-4-31 13-6-9-22-12-8-13 13z"/><path d="m37 17 13 13 13-13M50 30v52M44 45h2M55 45h2"/></>}
-      {kind === 'bag' && <><path d="M22 38h56l5 45H17z"/><path d="M35 38V29a15 15 0 0 1 30 0v9M33 54h34"/></>}
-    </svg><span className="fallback-product-name">{product.name}</span>
-  </div>;
+  return <div className="product-placeholder" role="img" aria-label={product.name}><span>{product.name}</span></div>;
 }
 
 function normalizeSearch(value: string) {
