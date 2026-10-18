@@ -125,6 +125,12 @@ app.post('/api/products', requirePermission('productsWrite'), async (c) => {
   return c.json({ success: true, data: document }, 201);
 });
 
+app.delete('/api/products/:id', requirePermission('productsWrite'), async (c) => {
+  const result = await new D1Repository(c.env.DB).removeProduct(c.req.param('id'));
+  if (!result) return c.json({ success: false, message: 'Product not found.' }, 404);
+  return c.json({ success: true, data: result, message: result.archived ? 'Product was removed from inventory; its transaction history was preserved.' : 'Product deleted.' });
+});
+
 app.post('/api/employees', async (c) => {
   if (c.get('user').role !== 'admin') return c.json({ success: false, message: 'Administrator access required.' }, 403);
   const body = await c.req.json<{ name?: string; username?: string; email?: string; password?: string; phone?: string; branch?: string; jobTitle?: string; permissions?: Record<string, unknown> }>();

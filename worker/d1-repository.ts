@@ -105,6 +105,19 @@ export class D1Repository {
     return this.getProduct(id);
   }
 
+  async removeProduct(id: string) {
+    const existing = await this.db.prepare('SELECT id FROM products WHERE id = ? AND is_active = 1').bind(id).first<{ id: string }>();
+    if (!existing) return null;
+    const removed = await this.db.prepare(`DELETE FROM products WHERE id = ? AND is_active = 1 AND NOT EXISTS (
+      SELECT 1 FROM transactions t, json_each(t.items_json) item
+      WHERE json_extract(item.value, '$.productId') = ?
+    )`).bind(id, id).run();
+    if (removed.meta.changes > 0) return { deleted: true, archived: false };
+    await this.db.prepare('UPDATE products SET is_active = 0, updated_at = ? WHERE id = ? AND is_active = 1')
+      .bind(new Date().toISOString(), id).run();
+    return { deleted: false, archived: true };
+  }
+
   async listEmployees() {
     const rows = await this.db.prepare("SELECT * FROM users WHERE role = 'employee' ORDER BY name").all<UserRow>();
     return (rows.results ?? []).map(decodeUser);
