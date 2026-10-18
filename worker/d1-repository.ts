@@ -176,9 +176,21 @@ export class D1Repository {
       (SELECT COALESCE(SUM(total_amount),0) FROM transactions WHERE type = 'sale') AS revenue,
       (SELECT COALESCE(SUM(json_extract(item.value,'$.costPriceAtSale') * json_extract(item.value,'$.quantity')),0)
         FROM transactions AS t, json_each(t.items_json) AS item WHERE t.type = 'sale') AS cogs,
-      (SELECT COUNT(*) FROM transactions WHERE type = 'return') AS returnsCount
-    `).first<{ products: number; unitsInStock: number; lowStock: number; salesCount: number; revenue: number; cogs: number; returnsCount: number }>();
-    return row;
+      (SELECT COUNT(*) FROM transactions WHERE type = 'return') AS returnsCount,
+      (SELECT COALESCE(SUM(total_amount),0) FROM transactions WHERE type = 'return') AS returnsValue,
+      (SELECT COALESCE(SUM(quantity * cost_price),0) FROM products WHERE is_active = 1) AS inventoryCost
+    `).first<{ products: number; unitsInStock: number; lowStock: number; salesCount: number; revenue: number; cogs: number; returnsCount: number; returnsValue: number; inventoryCost: number }>();
+    const [daily, popular] = await Promise.all([
+      this.db.prepare(`SELECT date(created_at) AS day, COALESCE(SUM(CASE WHEN type='sale' THEN total_amount ELSE -total_amount END),0) AS revenue,
+        SUM(CASE WHEN type='sale' THEN 1 ELSE 0 END) AS salesCount
+        FROM transactions WHERE date(created_at) >= date('now','-6 days')
+        GROUP BY date(created_at) ORDER BY day`).all<{ day: string; revenue: number; salesCount: number }>(),
+      this.db.prepare(`SELECT json_extract(item.value,'$.productName') AS name,
+        SUM(json_extract(item.value,'$.quantity')) AS quantity
+        FROM transactions t, json_each(t.items_json) item WHERE t.type='sale'
+        GROUP BY name ORDER BY quantity DESC LIMIT 5`).all<{ name: string; quantity: number }>(),
+    ]);
+    return { ...row, dailySales: daily.results ?? [], topProducts: popular.results ?? [] };
   }
 
   async listTransactions() {
