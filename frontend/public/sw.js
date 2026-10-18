@@ -1,4 +1,4 @@
-const VERSION = 'apparel-shell-v2';
+const VERSION = 'apparel-shell-v3';
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(VERSION);
@@ -7,7 +7,11 @@ self.addEventListener('install', (event) => {
     await cache.put(self.registration.scope, shell.clone());
     const html = await shell.text();
     const assets = [...html.matchAll(/(?:src|href)=["']([^"']+\.(?:js|css)(?:\?[^"']*)?)["']/g)].map((match) => new URL(match[1], self.registration.scope));
-    await Promise.all(assets.map(async (url) => { const response = await fetch(url, { cache: 'reload' }); if (response.ok) await cache.put(url.href, response); }));
+    // One unavailable asset must not prevent the service worker from installing.
+    await Promise.allSettled(assets.map(async (url) => {
+      const response = await fetch(url, { cache: 'reload' });
+      if (response.ok) await cache.put(url.href, response);
+    }));
     await self.skipWaiting();
   })());
 });
@@ -25,14 +29,19 @@ self.addEventListener('fetch', (event) => {
   if (request.mode === 'navigate') {
     event.respondWith((async () => {
       const cache = await caches.open(VERSION);
+      const cachedShell = await cache.match(self.registration.scope);
+      if (!self.navigator.onLine && cachedShell) return cachedShell;
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 2500);
       try {
         const response = await fetch(request, { signal: controller.signal });
-        if (response.ok) { await cache.put(self.registration.scope, response.clone()); return response; }
-        return (await cache.match(self.registration.scope)) || response;
+        if (response.ok) {
+          event.waitUntil(cache.put(self.registration.scope, response.clone()).catch(() => undefined));
+          return response;
+        }
+        return cachedShell || response;
       } catch {
-        return (await cache.match(self.registration.scope)) || Response.error();
+        return cachedShell || Response.error();
       } finally { clearTimeout(timeout); }
     })());
     return;
