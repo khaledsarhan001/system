@@ -10,7 +10,7 @@ type UserRow = {
   id: string; name: string; username: string; email: string; role: 'admin' | 'employee';
   phone: string; branch: string; job_title: string;
   is_active: number; permissions_json: string; password_hash: string; password_salt: string;
-  created_at: string; updated_at: string;
+  created_at: string; updated_at: string; last_active_at?: string | null;
 };
 
 type ProductRow = {
@@ -28,7 +28,7 @@ function decodeUser(row: UserRow): User & { passwordHash: string; passwordSalt: 
   return {
     id: row.id, name: row.name, username: row.username, email: row.email, role: row.role,
     phone: row.phone ?? '', branch: row.branch ?? '', jobTitle: row.job_title ?? '',
-    isActive: row.is_active === 1, permissions,
+    isActive: row.is_active === 1, lastActiveAt: row.last_active_at ?? undefined, permissions,
     passwordHash: row.password_hash, passwordSalt: row.password_salt,
   };
 }
@@ -110,6 +110,12 @@ export class D1Repository {
     return (rows.results ?? []).map(decodeUser);
   }
 
+  async markUserActive(id: string) {
+    const timestamp = new Date().toISOString();
+    await this.db.prepare('UPDATE users SET last_active_at=? WHERE id=? AND is_active=1').bind(timestamp, id).run();
+    return timestamp;
+  }
+
   async createEmployee(employee: { id: string; name: string; username: string; email: string; phone?: string; branch?: string; jobTitle?: string; passwordHash: string; passwordSalt: string; permissions: Record<Permission, boolean> }) {
     const now = new Date().toISOString();
     await this.db.prepare(`INSERT INTO users
@@ -133,9 +139,13 @@ export class D1Repository {
     } catch { throw new Error('Username or email is already in use.'); }
   }
 
-  async deactivateEmployee(id: string) {
-    const result = await this.db.prepare("UPDATE users SET is_active=0,updated_at=? WHERE id=? AND role='employee'").bind(new Date().toISOString(), id).run();
-    return result.meta.changes > 0;
+  async removeEmployee(id: string) {
+    const existing = await this.db.prepare("SELECT id FROM users WHERE id=? AND role='employee'").bind(id).first<{id:string}>();
+    if (!existing) return null;
+    const removed = await this.db.prepare("DELETE FROM users WHERE id=? AND role='employee' AND NOT EXISTS (SELECT 1 FROM transactions WHERE employee_id=?)").bind(id, id).run();
+    if (removed.meta.changes > 0) return { deleted: true, archived: false };
+    await this.db.prepare("UPDATE users SET is_active=0,updated_at=? WHERE id=? AND role='employee'").bind(new Date().toISOString(), id).run();
+    return { deleted: false, archived: true };
   }
 
   async updateEmployeePermissions(id: string, permissions: Record<Permission, boolean>) {

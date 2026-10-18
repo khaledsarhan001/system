@@ -27,3 +27,13 @@
 .analytics-report-actions { display:flex; justify-content:flex-end; }
 .restore-file { display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; cursor:pointer; }
 .restore-file input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+.status-dot{display:inline-flex;align-items:center;gap:6px;border:1px solid transparent;border-radius:999px;padding:6px 10px;font-size:11px;white-space:nowrap}
+.status-dot.online{color:#34d399;background:#10b98114;border-color:#10b9813a}
+.status-dot.offline{color:#fdba74;background:#f9731617;border-color:#f9731644}
+.status-dot.online::before,.status-dot.offline::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 10px currentColor;flex:none}
+.clothing-fallback{width:100%;height:100%;min-height:78px;display:grid;place-items:center;color:#a5b4fc;background:radial-gradient(circle at 50% 38%,#6366f128,transparent 64%),linear-gradient(135deg,#ffffff08,#6366f10b)}
+.clothing-fallback svg{width:68px;height:68px;filter:drop-shadow(0 6px 12px #6366f133)}
+.clothing-fallback.dress{color:#f0abfc}.clothing-fallback.coat{color:#a5b4fc}.clothing-fallback.bag{color:#6ee7b7}
+.cart-mini .clothing-fallback{min-height:42px;border-radius:10px}.cart-mini .clothing-fallback svg{width:34px;height:34px}.cart-mini .product-image{border-radius:10px}
+.employee-status{white-space:nowrap}
+@media(max-width:760px){.top-actions .status-dot{display:inline-flex;max-width:100px;white-space:normal;text-align:center;justify-content:center;font-size:8px;line-height:1.15;padding:5px 7px;gap:4px}.top-actions .status-dot::before{width:6px;height:6px}}

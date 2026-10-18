@@ -16,6 +16,7 @@ export type User = {
   jobTitle?: string;
   role: 'admin' | 'employee';
   isActive: boolean;
+  lastActiveAt?: string;
   permissions: Record<Permission, boolean>;
 };
 

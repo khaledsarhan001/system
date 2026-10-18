@@ -55,7 +55,7 @@ function requirePermission(permission: Permission) {
 function cleanUser(user: User) {
   return { id: user.id, name: user.name, username: user.username, email: user.email,
     phone: user.phone ?? '', branch: user.branch ?? '', jobTitle: user.jobTitle ?? '',
-    role: user.role, isActive: user.isActive, permissions: { ...DEFAULT_PERMISSIONS, ...user.permissions } };
+    role: user.role, isActive: user.isActive, lastActiveAt: user.lastActiveAt, permissions: { ...DEFAULT_PERMISSIONS, ...user.permissions } };
 }
 
 async function hashPassword(password: string, salt = crypto.getRandomValues(new Uint8Array(16))) {
@@ -88,6 +88,12 @@ app.post('/api/auth/login', async (c) => {
 });
 
 app.get('/api/auth/me', (c) => c.json({ success: true, data: cleanUser(c.get('user')) }));
+
+app.post('/api/employees/heartbeat', async (c) => {
+  const user = c.get('user');
+  const lastActiveAt = await new D1Repository(c.env.DB).markUserActive(user.id);
+  return c.json({ success: true, data: { lastActiveAt } });
+});
 
 app.post('/api/admin/factory-reset', async (c) => {
   const user = c.get('user');
@@ -158,8 +164,9 @@ app.put('/api/employees/:id', async (c) => {
 
 app.delete('/api/employees/:id', async (c) => {
   if (c.get('user').role !== 'admin') return c.json({ success: false, message: 'Administrator access required.' }, 403);
-  const removed = await new D1Repository(c.env.DB).deactivateEmployee(c.req.param('id'));
-  return removed ? c.json({ success: true }) : c.json({ success: false, message: 'Employee not found.' }, 404);
+  const result = await new D1Repository(c.env.DB).removeEmployee(c.req.param('id'));
+  if (!result) return c.json({ success: false, message: 'Employee not found.' }, 404);
+  return c.json({ success: true, data: result, message: result.archived ? 'Employee has transaction history and was deactivated to preserve audit records.' : 'Employee account deleted.' });
 });
 
 app.put('/api/products/:id', requirePermission('productsWrite'), async (c) => {
