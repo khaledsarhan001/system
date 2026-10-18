@@ -224,6 +224,14 @@ function App() {
 
   useEffect(() => { document.documentElement.dataset.theme = theme; localStorage.setItem('apparel_theme', theme); }, [theme]);
   useEffect(() => { document.documentElement.lang = language; document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr'; localStorage.setItem('apparel_lang', language); }, [language]);
+  useEffect(() => {
+    const preventInterfaceCopy = (event: ClipboardEvent) => {
+      const target = event.target as Element | null;
+      if (!target?.closest('input, textarea, [contenteditable="true"], [contenteditable=""]')) event.preventDefault();
+    };
+    document.addEventListener('copy', preventInterfaceCopy);
+    return () => document.removeEventListener('copy', preventInterfaceCopy);
+  }, []);
   useEffect(() => { const online = () => setIsOnline(true); const offline = () => setIsOnline(false); window.addEventListener('online', online); window.addEventListener('offline', offline); return () => { window.removeEventListener('online', online); window.removeEventListener('offline', offline); }; }, []);
   useEffect(() => {
     if (!user || user.role !== 'employee') return;
