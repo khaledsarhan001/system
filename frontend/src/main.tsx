@@ -5,6 +5,10 @@ import './style.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
+class ApiError extends Error {
+  constructor(message: string, readonly status: number) { super(message); this.name = 'ApiError'; }
+}
+
 type Permission = 'productsRead' | 'productsWrite' | 'salesCreate' | 'employeesRead' | 'analyticsRead';
 type User = { id: string; name: string; username: string; email: string; phone?: string; branch?: string; jobTitle?: string; lastActiveAt?: string; role: 'admin' | 'employee'; permissions: Record<Permission, boolean> };
 type Product = { id: string; name: string; sku: string; category: 'Men' | 'Women' | 'Kids'; productType?: string; retailPrice: number; costPrice: number; quantity: number; colors: string[]; imageUrl?: string; isActive?: boolean };
@@ -79,7 +83,7 @@ function App() {
       return { success: true, offlineQueued: true } as T;
     }
     const body = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(body.message || `Request failed (${response.status})`);
+    if (!response.ok) throw new ApiError(body.message || `Request failed (${response.status})`, response.status);
     return body as T;
   }
 
@@ -95,7 +99,7 @@ function App() {
   async function loadTransactions() { try { const result = await request<{ data: Transaction[] }>('/transactions'); setTransactions(result.data ?? []); localStorage.setItem('apparel_cached_transactions_v1', JSON.stringify(result.data ?? [])); } catch (error) { const cached = JSON.parse(localStorage.getItem('apparel_cached_transactions_v1') || '[]') as Transaction[]; if (!navigator.onLine || error instanceof TypeError) { setTransactions(cached); return; } throw error; } }
 
   useEffect(() => { localStorage.setItem('apparel_cart_v1', JSON.stringify(cart)); }, [cart]);
-  useEffect(() => { if (navigator.serviceWorker) navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => undefined); }, []);
+  useEffect(() => { if (navigator.serviceWorker) navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, { updateViaCache: 'none' }).catch(() => undefined); }, []);
 
   useEffect(() => {
     if (!token) return;
@@ -108,7 +112,12 @@ function App() {
           setLegacyCounts({ products: Array.isArray(oldProducts) ? oldProducts.length : 0, transactions: Array.isArray(oldTransactions) ? oldTransactions.length : 0 });
         } catch { setLegacyCounts({ products: 0, transactions: 0 }); }
       }
-    }).catch((error) => { try { const saved = JSON.parse(localStorage.getItem('apparel_user_v1') || 'null') as User | null; if ((!navigator.onLine || error instanceof TypeError) && saved) { setUser(saved); return; } } catch { /* ignore invalid cached session */ } if (navigator.onLine && !(error instanceof TypeError)) { localStorage.removeItem('apparel_token'); setToken(''); setUser(null); } });
+    }).catch((error) => {
+      let saved: User | null = null;
+      try { saved = JSON.parse(localStorage.getItem('apparel_user_v1') || 'null') as User | null; } catch { /* ignore invalid cached session */ }
+      if (saved && (!navigator.onLine || error instanceof TypeError || (error instanceof ApiError && error.status >= 500))) { setUser(saved); return; }
+      if (error instanceof ApiError && error.status === 401) { localStorage.removeItem('apparel_token'); setToken(''); setUser(null); }
+    });
   }, [token]);
 
   useEffect(() => { if (user) localStorage.setItem('apparel_user_v1', JSON.stringify(user)); }, [user]);

@@ -1,4 +1,4 @@
-const VERSION = 'apparel-shell-v1';
+const VERSION = 'apparel-shell-v2';
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(VERSION);
@@ -25,13 +25,15 @@ self.addEventListener('fetch', (event) => {
   if (request.mode === 'navigate') {
     event.respondWith((async () => {
       const cache = await caches.open(VERSION);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2500);
       try {
-        const response = await fetch(request);
-        if (response.ok) await cache.put(self.registration.scope, response.clone());
-        return response;
+        const response = await fetch(request, { signal: controller.signal });
+        if (response.ok) { await cache.put(self.registration.scope, response.clone()); return response; }
+        return (await cache.match(self.registration.scope)) || response;
       } catch {
         return (await cache.match(self.registration.scope)) || Response.error();
-      }
+      } finally { clearTimeout(timeout); }
     })());
     return;
   }
