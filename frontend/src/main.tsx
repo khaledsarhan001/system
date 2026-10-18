@@ -16,15 +16,15 @@ const permissionDefaults: Record<Permission, boolean> = { productsRead: true, pr
 
 function App() {
   const [token, setToken] = useState(() => localStorage.getItem('apparel_token') || '');
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => { try { return !navigator.onLine ? JSON.parse(localStorage.getItem('apparel_user_v1') || 'null') : null; } catch { return null; } });
   const [tab, setTab] = useState<'products' | 'sales' | 'returns' | 'history' | 'analytics' | 'employees'>('products');
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>(() => { try { return JSON.parse(localStorage.getItem('apparel_cached_products_v1') || '[]'); } catch { return []; } });
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>(() => { try { return JSON.parse(localStorage.getItem('apparel_cached_transactions_v1') || '[]'); } catch { return []; } });
   const [analytics, setAnalytics] = useState({ products: 0, unitsInStock: 0, lowStock: 0, salesCount: 0, revenue: 0, cogs: 0, returnsCount: 0 });
   const [analyticsTab, setAnalyticsTab] = useState<'overview' | 'reports' | 'inventory'>('overview');
   const [query, setQuery] = useState('');
-  const [cart, setCart] = useState<Record<string, number>>({});
+  const [cart, setCart] = useState<Record<string, number>>(() => { try { return JSON.parse(localStorage.getItem('apparel_cart_v1') || '{}'); } catch { return {}; } });
   const [editing, setEditing] = useState<Product | null | 'new'>(null);
   const [productImage, setProductImage] = useState('');
   const [newEmployee, setNewEmployee] = useState(false);
@@ -58,8 +58,10 @@ function App() {
     catch (error) {
       const method = (init.method || 'GET').toUpperCase();
       if (!['POST', 'PUT'].includes(method) || !['/sales', '/returns', '/products', ...products.map((p) => `/products/${p.id}`)].includes(path)) throw error;
-      const queue = JSON.parse(localStorage.getItem('apparel_offline_queue_v1') || '[]') as { id: string; path: string; method: string; body: string }[];
-      queue.push({ id: crypto.randomUUID(), path, method, body: String(init.body || '{}') });
+      const queue = JSON.parse(localStorage.getItem('apparel_offline_queue_v1') || '[]') as { id: string; path: string; method: string; body: string; tempId?: string }[];
+      let tempId: string | undefined;
+      if (path === '/products') { const data = JSON.parse(String(init.body || '{}')) as Omit<Product, 'id'>; tempId = `offline-${crypto.randomUUID()}`; const cached = JSON.parse(localStorage.getItem('apparel_cached_products_v1') || '[]') as Product[]; const created: Product = { ...data, id: tempId, quantity: Number(data.quantity) || 0, retailPrice: Number(data.retailPrice) || 0, costPrice: Number(data.costPrice) || 0, colors: data.colors || [] }; const updated = [...cached, created]; localStorage.setItem('apparel_cached_products_v1', JSON.stringify(updated)); setProducts(updated); }
+      queue.push({ id: crypto.randomUUID(), path, method, body: String(init.body || '{}'), ...(tempId ? { tempId } : {}) });
       localStorage.setItem('apparel_offline_queue_v1', JSON.stringify(queue)); setOfflinePending(queue.length);
       if (path === '/sales' || path === '/returns') {
         const body = JSON.parse(String(init.body || '{}')) as { items?: { productId: string; quantity: number }[] };
@@ -82,14 +84,17 @@ function App() {
 
   async function loadProducts() {
     try { const response = await request<{ data: Product[] }>('/products'); setProducts(response.data ?? []); localStorage.setItem('apparel_cached_products_v1', JSON.stringify(response.data ?? [])); }
-    catch (error) { const cached = JSON.parse(localStorage.getItem('apparel_cached_products_v1') || '[]') as Product[]; if (!navigator.onLine && cached.length) { setProducts(cached); return; } throw error; }
+    catch (error) { const cached = JSON.parse(localStorage.getItem('apparel_cached_products_v1') || '[]') as Product[]; if ((!navigator.onLine || error instanceof TypeError) && cached.length) { setProducts(cached); return; } throw error; }
   }
   async function loadEmployees() {
     const response = await request<{ data: Employee[] }>('/employees');
     setEmployees(response.data ?? []);
   }
   async function loadAnalytics() { const result = await request<{ data: typeof analytics }>('/analytics'); setAnalytics(result.data); }
-  async function loadTransactions() { const result = await request<{ data: Transaction[] }>('/transactions'); setTransactions(result.data ?? []); }
+  async function loadTransactions() { try { const result = await request<{ data: Transaction[] }>('/transactions'); setTransactions(result.data ?? []); localStorage.setItem('apparel_cached_transactions_v1', JSON.stringify(result.data ?? [])); } catch (error) { const cached = JSON.parse(localStorage.getItem('apparel_cached_transactions_v1') || '[]') as Transaction[]; if (!navigator.onLine || error instanceof TypeError) { setTransactions(cached); return; } throw error; } }
+
+  useEffect(() => { localStorage.setItem('apparel_cart_v1', JSON.stringify(cart)); }, [cart]);
+  useEffect(() => { if (navigator.serviceWorker) navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => undefined); }, []);
 
   useEffect(() => {
     if (!token) return;
@@ -102,24 +107,41 @@ function App() {
           setLegacyCounts({ products: Array.isArray(oldProducts) ? oldProducts.length : 0, transactions: Array.isArray(oldTransactions) ? oldTransactions.length : 0 });
         } catch { setLegacyCounts({ products: 0, transactions: 0 }); }
       }
-    }).catch(() => { try { const saved = JSON.parse(localStorage.getItem('apparel_user_v1') || 'null') as User | null; if (!navigator.onLine && saved) { setUser(saved); return; } } catch { /* ignore invalid cached session */ } if (navigator.onLine) { localStorage.removeItem('apparel_token'); setToken(''); setUser(null); } });
+    }).catch((error) => { try { const saved = JSON.parse(localStorage.getItem('apparel_user_v1') || 'null') as User | null; if ((!navigator.onLine || error instanceof TypeError) && saved) { setUser(saved); return; } } catch { /* ignore invalid cached session */ } if (navigator.onLine && !(error instanceof TypeError)) { localStorage.removeItem('apparel_token'); setToken(''); setUser(null); } });
   }, [token]);
 
   useEffect(() => { if (user) localStorage.setItem('apparel_user_v1', JSON.stringify(user)); }, [user]);
   useEffect(() => {
     const sync = async () => {
       if (!navigator.onLine) return;
-      const queue = JSON.parse(localStorage.getItem('apparel_offline_queue_v1') || '[]') as { id: string; path: string; method: string; body: string }[];
-      const pending = [...queue];
-      while (pending.length) {
-        const item = pending[0];
-        try { const response = await fetch(`${API_BASE}/api${item.path}`, { method: item.method, headers: { 'content-type': 'application/json', authorization: `Bearer ${localStorage.getItem('apparel_token') || ''}` }, body: item.body }); if (!response.ok) break; pending.shift(); localStorage.setItem('apparel_offline_queue_v1', JSON.stringify(pending)); setOfflinePending(pending.length); }
-        catch { break; }
+      const queue = JSON.parse(localStorage.getItem('apparel_offline_queue_v1') || '[]') as { id: string; path: string; method: string; body: string; tempId?: string }[];
+      const remap = JSON.parse(localStorage.getItem('apparel_offline_id_map_v1') || '{}') as Record<string, string>;
+      let changed = false;
+      while (queue.length && navigator.onLine) {
+        const item = queue[0];
+        let path = item.path;
+        for (const [from, to] of Object.entries(remap)) path = path.replaceAll(from, to);
+        let body = item.body;
+        try { const data = JSON.parse(body); if (Array.isArray(data.items)) data.items = data.items.map((line: { productId: string }) => ({ ...line, productId: remap[line.productId] || line.productId })); body = JSON.stringify(data); } catch { /* send the saved payload unchanged */ }
+        try {
+          const response = await fetch(`${API_BASE}/api${path}`, { method: item.method, headers: { 'content-type': 'application/json', authorization: `Bearer ${localStorage.getItem('apparel_token') || ''}` }, body });
+          if (!response.ok) break;
+          const result = await response.json().catch(() => ({}));
+          if (item.method === 'POST' && item.path === '/products' && item.tempId && result.data?.id) {
+            remap[item.tempId] = result.data.id; localStorage.setItem('apparel_offline_id_map_v1', JSON.stringify(remap));
+            const cached = JSON.parse(localStorage.getItem('apparel_cached_products_v1') || '[]') as Product[];
+            const updated = cached.map((p) => p.id === item.tempId ? result.data as Product : p);
+            localStorage.setItem('apparel_cached_products_v1', JSON.stringify(updated)); setProducts(updated);
+            const currentCart = JSON.parse(localStorage.getItem('apparel_cart_v1') || '{}') as Record<string, number>;
+            if (currentCart[item.tempId]) { currentCart[result.data.id] = (currentCart[result.data.id] || 0) + currentCart[item.tempId]; delete currentCart[item.tempId]; localStorage.setItem('apparel_cart_v1', JSON.stringify(currentCart)); setCart(currentCart); }
+          }
+          queue.shift(); changed = true; localStorage.setItem('apparel_offline_queue_v1', JSON.stringify(queue)); setOfflinePending(queue.length);
+        } catch { break; }
       }
-      if (pending.length < queue.length) { loadProducts().catch(() => undefined); loadTransactions().catch(() => undefined); loadAnalytics().catch(() => undefined); }
+      if (changed) { localStorage.removeItem('apparel_offline_id_map_v1'); loadProducts().catch(() => undefined); loadTransactions().catch(() => undefined); loadAnalytics().catch(() => undefined); }
     };
     window.addEventListener('online', sync); sync(); return () => window.removeEventListener('online', sync);
-  }, [token, user]);
+  }, [token]);
 
   useEffect(() => { localStorage.setItem('apparel_backup_interval_v1', backupInterval); if (backupInterval === 'manual') return; const ms = backupInterval === '6h' ? 6 * 3600000 : backupInterval === 'daily' ? 86400000 : 7 * 86400000; const save = () => { const last = Number(localStorage.getItem('apparel_backup_at_v1') || 0); if (Date.now() - last < ms) return; localStorage.setItem('apparel_auto_backup_latest_v1', JSON.stringify({ version: 1, createdAt: new Date().toISOString(), products: JSON.parse(localStorage.getItem('apparel_cached_products_v1') || '[]'), transactions })); localStorage.setItem('apparel_backup_at_v1', String(Date.now())); }; save(); const id = window.setInterval(save, 60000); return () => clearInterval(id); }, [backupInterval, transactions]);
 
@@ -209,8 +231,10 @@ function App() {
   async function checkout() {
     setBusy(true); setMessage('');
     try {
-      await request('/sales', { method: 'POST', body: JSON.stringify({ items: cartItems.map(({ id, count }) => ({ productId: id, quantity: count })) }) });
-      setCart({}); await loadProducts(); setMessage('تم تسجيل البيع بنجاح');
+      const result = await request<{ offlineQueued?: boolean; data?: Transaction }>('/sales', { method: 'POST', body: JSON.stringify({ items: cartItems.map(({ id, count }) => ({ productId: id, quantity: count })) }) });
+      const localSale: Transaction = result.data ?? { id: `offline-${crypto.randomUUID()}`, type: 'sale', employeeName: user?.name || 'Offline', items: cartItems.map((p) => ({ productName: p.name, sku: p.sku, quantity: p.count, unitPrice: p.retailPrice })), totalAmount: cartTotal, createdAt: new Date().toISOString() };
+      const saved = JSON.parse(localStorage.getItem('apparel_cached_transactions_v1') || '[]') as Transaction[]; const updated = [localSale, ...saved]; localStorage.setItem('apparel_cached_transactions_v1', JSON.stringify(updated)); setTransactions(updated);
+      setCart({}); await loadProducts(); setMessage(result.offlineQueued ? 'تم حفظ البيع على الجهاز وسيُزامن تلقائيًا عند عودة الإنترنت.' : 'تم تسجيل البيع بنجاح');
     } catch (e) { setMessage(e instanceof Error ? e.message : 'تعذر إتمام البيع'); }
     finally { setBusy(false); }
   }
@@ -220,8 +244,11 @@ function App() {
     if (!product) { setMessage('اختر المنتج المرتجع أولًا.'); return; }
     setBusy(true);
     try {
-      await request('/returns', { method: 'POST', body: JSON.stringify({ items: [{ productId: product.id, quantity: Number(form.get('quantity')), color: product.colors[0] ?? '' }], reason: form.get('reason') }) });
-      setMessage('تم تسجيل المرتجع وإضافة الكمية إلى المخزون.'); formElement.reset(); setReturnProduct(''); await loadProducts();
+      const quantity = Number(form.get('quantity'));
+      const result = await request<{ offlineQueued?: boolean; data?: Transaction }>('/returns', { method: 'POST', body: JSON.stringify({ items: [{ productId: product.id, quantity, color: product.colors[0] ?? '' }], reason: form.get('reason') }) });
+      const localReturn: Transaction = result.data ?? { id: `offline-${crypto.randomUUID()}`, type: 'return', employeeName: user?.name || 'Offline', items: [{ productName: product.name, sku: product.sku, quantity, unitPrice: product.retailPrice }], totalAmount: quantity * product.retailPrice, returnReason: String(form.get('reason') || ''), createdAt: new Date().toISOString() };
+      const saved = JSON.parse(localStorage.getItem('apparel_cached_transactions_v1') || '[]') as Transaction[]; const updated = [localReturn, ...saved]; localStorage.setItem('apparel_cached_transactions_v1', JSON.stringify(updated)); setTransactions(updated);
+      setMessage(result.offlineQueued ? 'تم حفظ المرتجع على الجهاز وسيُزامن عند عودة الإنترنت.' : 'تم تسجيل المرتجع وإضافة الكمية إلى المخزون.'); formElement.reset(); setReturnProduct(''); await loadProducts();
     } catch (e) { setMessage(e instanceof Error ? e.message : 'تعذر تسجيل المرتجع'); }
     finally { setBusy(false); }
   }
@@ -278,7 +305,7 @@ function App() {
     setBusy(true);
     try {
       await request('/admin/factory-reset', { method: 'POST', body: JSON.stringify({ password: form.get('password') }) });
-      const keys = Object.keys(localStorage).filter((key) => /^(apparel_(products|transactions|cart|cached_products|offline_queue|legacy_imported|auto_backup_latest|backup_at)_v1)$/.test(key));
+      const keys = Object.keys(localStorage).filter((key) => /^(apparel_(products|transactions|cart|cached_products|cached_transactions|offline_queue|offline_id_map|legacy_imported|auto_backup_latest|backup_at)_v1)$/.test(key));
       keys.forEach((key) => localStorage.removeItem(key));
       setCart({}); setResetOpen(false);
       if (indexedDB.databases) { const dbs = await indexedDB.databases(); await Promise.all(dbs.filter((db) => /apparel|pos/i.test(db.name || '')).map((db) => new Promise<void>((resolve) => { const deletion = indexedDB.deleteDatabase(db.name!); deletion.onsuccess = deletion.onerror = deletion.onblocked = () => resolve(); }))); }
